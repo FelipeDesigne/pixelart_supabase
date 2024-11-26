@@ -3,6 +3,7 @@ import { collection, query, orderBy, onSnapshot, where, addDoc, serverTimestamp,
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Send, Loader2 } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 interface Message {
   id: string;
@@ -20,6 +21,7 @@ export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [sendingMessage, setSendingMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   console.log('Chat component rendered, user:', user);
@@ -83,6 +85,7 @@ export default function Chat() {
     e.preventDefault();
     if (!newMessage.trim() || !user) return;
 
+    setSendingMessage(true);
     try {
       console.log('Attempting to send message');
       const messageData = {
@@ -103,6 +106,9 @@ export default function Chat() {
       scrollToBottom();
     } catch (error) {
       console.error('Error sending message:', error);
+      toast.error('Erro ao enviar mensagem. Tente novamente.');
+    } finally {
+      setSendingMessage(false);
     }
   };
 
@@ -163,10 +169,14 @@ export default function Chat() {
           />
           <button
             type="submit"
-            disabled={!newMessage.trim()}
+            disabled={!newMessage.trim() || sendingMessage}
             className="bg-primary text-white rounded-lg px-4 py-2 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Send className="w-5 h-5" />
+            {sendingMessage ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Send className="w-5 h-5" />
+            )}
           </button>
         </div>
       </form>

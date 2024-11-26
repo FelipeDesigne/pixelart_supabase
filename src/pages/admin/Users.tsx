@@ -16,7 +16,8 @@ import {
   updatePassword,
   EmailAuthProvider,
   getAuth,
-  signInWithEmailAndPassword
+  signInWithEmailAndPassword,
+  fetchSignInMethodsForEmail
 } from 'firebase/auth';
 import { auth, db } from '../../lib/firebase';
 import { toast } from 'react-hot-toast';
@@ -94,15 +95,16 @@ export default function Users() {
     }
 
     try {
-      // Verificar se já existe um usuário com este email
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('email', '==', newUser.email));
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        toast.error('Este email já está em uso');
-        setLoading(false);
-        return;
+      // Primeiro, verificar se o email já existe no Firebase Auth
+      try {
+        const methods = await fetchSignInMethodsForEmail(auth, newUser.email);
+        if (methods.length > 0) {
+          toast.error('Este email já está em uso');
+          setLoading(false);
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking email:', error);
       }
 
       // Create authentication user
@@ -140,6 +142,7 @@ export default function Users() {
       });
       
       // Refresh users list
+      const usersRef = collection(db, 'users');
       const snapshot = await getDocs(usersRef);
       const usersData = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -148,7 +151,11 @@ export default function Users() {
       setUsers(usersData);
     } catch (error: any) {
       console.error('Error creating user:', error);
-      toast.error(error.message || 'Erro ao criar usuário');
+      if (error.code === 'auth/email-already-in-use') {
+        toast.error('Este email já está em uso');
+      } else {
+        toast.error(error.message || 'Erro ao criar usuário');
+      }
     } finally {
       setLoading(false);
     }

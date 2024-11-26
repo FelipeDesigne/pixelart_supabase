@@ -4,6 +4,7 @@ import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Send, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import toast from 'react-hot-toast'; // Import toast
 
 interface Message {
   id: string;
@@ -33,6 +34,7 @@ export default function Messages() {
   const [newMessage, setNewMessage] = useState('');
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sendingMessage, setSendingMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -154,8 +156,10 @@ export default function Messages() {
     e.preventDefault();
     if (!newMessage.trim() || !selectedChat || !currentUser) return;
 
+    setSendingMessage(true);
     try {
-      await addDoc(collection(db, 'messages'), {
+      console.log('Attempting to send message as admin');
+      const messageData = {
         chatId: selectedChat.id,
         text: newMessage.trim(),
         senderId: currentUser.uid,
@@ -163,12 +167,19 @@ export default function Messages() {
         isAdmin: true,
         createdAt: serverTimestamp(),
         read: false
-      });
+      };
+      console.log('Message data to send:', messageData);
+
+      await addDoc(collection(db, 'messages'), messageData);
+      console.log('Message sent successfully');
 
       setNewMessage('');
       scrollToBottom();
     } catch (error) {
       console.error('Error sending message:', error);
+      toast.error('Erro ao enviar mensagem. Tente novamente.');
+    } finally {
+      setSendingMessage(false);
     }
   };
 
@@ -253,10 +264,14 @@ export default function Messages() {
               />
               <button
                 type="submit"
-                disabled={!newMessage.trim()}
+                disabled={!newMessage.trim() || sendingMessage}
                 className="bg-primary text-white rounded-lg px-4 py-2 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Send className="w-5 h-5" />
+                {sendingMessage ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Send className="w-5 h-5" />
+                )}
               </button>
             </div>
           </form>
