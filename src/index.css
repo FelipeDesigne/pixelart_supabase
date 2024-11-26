@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#0E1A23] text-white;
+  }
+}
+
+@layer components {
+  .gradient-bg {
+    @apply bg-gradient-to-b from-[#142830] to-[#0E1A23];
+  }
+
+  .btn-primary {
+    @apply bg-[#A4FF43] text-[#0E1A23] px-6 py-3 rounded-md hover:bg-[#8BD030] transition-colors duration-300;
+  }
+
+  .btn-outline {
+    @apply border-2 border-[#A4FF43] text-[#A4FF43] px-6 py-3 rounded-md hover:bg-[#A4FF43] hover:text-[#0E1A23] transition-colors duration-300;
+  }
+
+  .nav-link {
+    @apply text-white hover:text-[#A4FF43] transition-colors duration-300;
+  }
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #0E1A23 50%, #1A1F27 50%);
+}
