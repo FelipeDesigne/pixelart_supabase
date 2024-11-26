@@ -5,6 +5,11 @@ export default defineConfig({
   base: '/PixelArt/',
   plugins: [react()],
   build: {
-    outDir: 'dist'
+    outDir: 'dist',
+    emptyOutDir: true,
+    manifest: true,
+    rollupOptions: {
+      input: '/index.html'
+    }
   }
 });
