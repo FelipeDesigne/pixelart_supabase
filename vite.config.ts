@@ -9,13 +9,16 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
-    },
+    }
   },
   build: {
     outDir: 'dist',
     sourcemap: false,
     minify: 'esbuild',
     rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+      },
       output: {
         manualChunks: undefined,
         entryFileNames: 'assets/[name].[hash].js',
