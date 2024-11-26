@@ -9,7 +9,7 @@ export default defineConfig({
     emptyOutDir: true,
     manifest: true,
     rollupOptions: {
-      input: '/index.html'
+      input: 'index.html'
     }
   }
 });
