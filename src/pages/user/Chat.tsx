@@ -3,7 +3,7 @@ import { collection, query, orderBy, onSnapshot, where, addDoc, serverTimestamp,
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Send, Loader2 } from 'lucide-react';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 
 interface Message {
   id: string;
