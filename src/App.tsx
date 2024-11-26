@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes as ReactRoutes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes as ReactRoutes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -72,13 +72,13 @@ function AppRoutes() {
 export default function App() {
   return (
     <Router>
-      <AuthProvider>
-        <ThemeProvider>
-          <NotificationProvider>
+      <ThemeProvider>
+        <NotificationProvider>
+          <AuthProvider>
             <AppRoutes />
-          </NotificationProvider>
-        </ThemeProvider>
-      </AuthProvider>
+          </AuthProvider>
+        </NotificationProvider>
+      </ThemeProvider>
     </Router>
   );
 }
