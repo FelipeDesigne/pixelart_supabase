@@ -5,9 +5,18 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   base: '/PixelArt/',
   plugins: [react()],
+  server: {
+    headers: {
+      'Content-Type': 'text/javascript',
+    },
+  },
+  resolve: {
+    extensions: ['.js', '.jsx', '.ts', '.tsx']
+  },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    sourcemap: false,
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: undefined,
