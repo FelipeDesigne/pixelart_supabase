@@ -7,9 +7,13 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    manifest: true,
     rollupOptions: {
       input: 'index.html'
+    }
+  },
+  server: {
+    headers: {
+      'Content-Type': 'application/javascript'
     }
   }
 });
