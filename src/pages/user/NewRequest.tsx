@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../../lib/firebase';
-import { collection, addDoc, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
+import { uploadImage } from '../../services/imageUpload';
 
 export default function NewRequest() {
   const { user } = useAuth();
@@ -16,6 +17,8 @@ export default function NewRequest() {
     driveUrl: '' // Adicionado campo para URL do Google Drive
   });
   const [loading, setLoading] = useState(true);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const checkUserStatus = async () => {
@@ -68,31 +71,41 @@ export default function NewRequest() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    
+    if (!selectedFile) {
+      toast.error('Por favor, selecione uma imagem');
+      return;
+    }
+
+    if (!formData.description.trim()) {
+      toast.error('Por favor, adicione uma descrição');
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
-      // Buscar dados do usuário no Firestore
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      const userData = userDoc.data();
+      // Upload da imagem para o Supabase
+      const imageUrl = await uploadImage(selectedFile, user!.uid);
 
-      // Criar solicitação com nome do usuário
-      await addDoc(collection(db, 'requests'), {
-        ...formData,
-        userId: user?.uid,
-        userEmail: user?.email,
-        userName: userData?.name || user?.displayName || user?.email,
+      // Criar o pedido no Firestore
+      const docRef = await addDoc(collection(db, 'requests'), {
+        userId: user!.uid,
+        userName: user!.email,
+        imageUrl,
+        description: formData.description.trim(),
         status: 'pending',
-        createdAt: new Date(),
-        read: false // Adicionando o campo read como false por padrão
+        createdAt: serverTimestamp(),
+        read: false
       });
 
-      toast.success('Solicitação enviada com sucesso!');
-      navigate('/user');
+      toast.success('Pedido enviado com sucesso!');
+      navigate('/user/requests');
     } catch (error) {
-      console.error('Error creating request:', error);
-      toast.error('Erro ao criar solicitação');
+      console.error('Erro ao enviar pedido:', error);
+      toast.error('Erro ao enviar pedido. Tente novamente.');
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -197,12 +210,23 @@ export default function NewRequest() {
           </p>
         </div>
 
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Imagem
+          </label>
+          <input
+            type="file"
+            onChange={(e) => setSelectedFile(e.target.files[0])}
+            className="w-full p-2 bg-dark-lighter rounded-lg border border-gray-700 focus:outline-none focus:border-primary"
+          />
+        </div>
+
         <button
           type="submit"
-          disabled={loading}
+          disabled={isSubmitting}
           className="w-full btn-primary py-2 flex items-center justify-center gap-2"
         >
-          {loading ? (
+          {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
               Enviando...

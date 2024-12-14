@@ -5,6 +5,7 @@ import { db } from '../lib/firebase';
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { useState, useEffect } from 'react';
+import { deleteImage } from '../services/imageUpload';
 
 interface Request {
   id: string;
@@ -16,6 +17,7 @@ interface Request {
   status: string;
   createdAt: any;
   read: boolean;
+  imageUrl?: string;
 }
 
 interface RequestDetailsModalProps {
@@ -60,6 +62,12 @@ export default function RequestDetailsModal({ isOpen, onClose, request: initialR
 
     if (confirmed) {
       try {
+        // Deletar a imagem do Supabase
+        if (request.imageUrl) {
+          await deleteImage(request.imageUrl);
+        }
+
+        // Deletar o documento do Firestore
         await deleteDoc(doc(db, 'requests', request.id));
         toast.success('Pedido excluído com sucesso!');
         onClose();
