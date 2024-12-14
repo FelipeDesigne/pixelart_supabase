@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, getDocs, Timestamp, doc } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, Timestamp, doc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
@@ -38,12 +38,6 @@ export default function UserRequests() {
 
   useEffect(() => {
     if (user) {
-      fetchRequests();
-    }
-  }, [user, dateFilter, statusFilter]);
-
-  const fetchRequests = async () => {
-    try {
       const requestsRef = collection(db, 'requests');
       const startDate = startOfDay(subDays(new Date(), parseInt(dateFilter)));
       
@@ -63,40 +57,49 @@ export default function UserRequests() {
         );
       }
 
-      const querySnapshot = await getDocs(q);
-      const requestsData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Request[];
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        try {
+          const requestsData = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })) as Request[];
 
-      setRequests(requestsData);
-      
-      // Prepare chart data
-      const chartData: { [key: string]: number } = {};
-      for (let i = 0; i < parseInt(dateFilter); i++) {
-        const date = format(subDays(new Date(), i), 'dd/MM', { locale: ptBR });
-        chartData[date] = 0;
-      }
+          setRequests(requestsData);
+          
+          // Prepare chart data
+          const chartData: { [key: string]: number } = {};
+          for (let i = 0; i < parseInt(dateFilter); i++) {
+            const date = format(subDays(new Date(), i), 'dd/MM', { locale: ptBR });
+            chartData[date] = 0;
+          }
 
-      requestsData.forEach(request => {
-        const date = format(request.createdAt.toDate(), 'dd/MM', { locale: ptBR });
-        if (chartData[date] !== undefined) {
-          chartData[date]++;
+          requestsData.forEach(request => {
+            const date = format(request.createdAt.toDate(), 'dd/MM', { locale: ptBR });
+            if (chartData[date] !== undefined) {
+              chartData[date]++;
+            }
+          });
+
+          const formattedChartData = Object.entries(chartData)
+            .map(([date, requests]) => ({ date, requests }))
+            .reverse();
+
+          setChartData(formattedChartData);
+          setLoading(false);
+        } catch (error) {
+          console.error('Error processing requests:', error);
+          toast.error('Erro ao processar solicitações');
+          setLoading(false);
         }
+      }, (error) => {
+        console.error('Error fetching requests:', error);
+        toast.error('Erro ao carregar solicitações');
+        setLoading(false);
       });
 
-      const formattedChartData = Object.entries(chartData)
-        .map(([date, requests]) => ({ date, requests }))
-        .reverse();
-
-      setChartData(formattedChartData);
-    } catch (error) {
-      console.error('Error fetching requests:', error);
-      toast.error('Erro ao carregar solicitações');
-    } finally {
-      setLoading(false);
+      return () => unsubscribe();
     }
-  };
+  }, [user, dateFilter, statusFilter]);
 
   const filteredRequests = requests.filter(request => 
     request.description.toLowerCase().includes(searchTerm.toLowerCase())
