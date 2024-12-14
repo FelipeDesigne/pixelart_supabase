@@ -1,22 +1,23 @@
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, getDocs, where, Timestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, Timestamp, doc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
-import { Loader2, Download, Search, Filter } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { CSVLink } from 'react-csv';
-import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import { Search, Filter, Eye, X } from 'lucide-react';
+import { format, subDays, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface Request {
   id: string;
   status: 'pending' | 'in_progress' | 'completed' | 'rejected';
   createdAt: Timestamp;
-  userId: string;
-  userName: string;
   description: string;
+  imageUrl?: string;
+  reference?: string;
+  comments?: string[];
 }
 
 interface ChartData {
@@ -24,17 +25,22 @@ interface ChartData {
   requests: number;
 }
 
-export default function AdminDashboard() {
+export default function UserRequests() {
+  const { user } = useAuth();
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<ChartData[]>([]);
-  const [dateFilter, setDateFilter] = useState('7'); // dias
+  const [dateFilter, setDateFilter] = useState('7');
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    fetchRequests();
-  }, [dateFilter, statusFilter]);
+    if (user) {
+      fetchRequests();
+    }
+  }, [user, dateFilter, statusFilter]);
 
   const fetchRequests = async () => {
     try {
@@ -43,27 +49,24 @@ export default function AdminDashboard() {
       
       let q = query(
         requestsRef,
+        where('userId', '==', user?.uid),
         where('createdAt', '>=', startDate),
         orderBy('createdAt', 'desc')
       );
 
       if (statusFilter !== 'all') {
-        q = query(q, where('status', '==', statusFilter));
+        q = query(
+          requestsRef,
+          where('userId', '==', user?.uid),
+          where('status', '==', statusFilter),
+          orderBy('createdAt', 'desc')
+        );
       }
 
       const querySnapshot = await getDocs(q);
-      const requestsData = await Promise.all(querySnapshot.docs.map(async docSnapshot => {
-        const data = docSnapshot.data();
-        // Buscar dados do usuário
-        const userRef = doc(db, 'users', data.userId);
-        const userDoc = await getDoc(userRef);
-        const userName = userDoc.exists() ? userDoc.data().name : 'Usuário não encontrado';
-        
-        return {
-          id: docSnapshot.id,
-          ...data,
-          userName
-        };
+      const requestsData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
       })) as Request[];
 
       setRequests(requestsData);
@@ -107,13 +110,6 @@ export default function AdminDashboard() {
     rejected: requests.filter(r => r.status === 'rejected').length,
   };
 
-  const csvData = filteredRequests.map(request => ({
-    Usuário: request.userName,
-    Status: request.status,
-    'Data de Criação': format(request.createdAt.toDate(), 'dd/MM/yyyy HH:mm', { locale: ptBR }),
-    Descrição: request.description,
-  }));
-
   if (loading) {
     return (
       <div className="space-y-6">
@@ -130,15 +126,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Dashboard Administrativo</h1>
-        <CSVLink
-          data={csvData}
-          filename={`relatorio-${format(new Date(), 'dd-MM-yyyy')}.csv`}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
-        >
-          <Download className="w-4 h-4" />
-          Exportar CSV
-        </CSVLink>
+        <h1 className="text-3xl font-bold">Minhas Solicitações</h1>
       </div>
       
       {/* Estatísticas */}
@@ -195,7 +183,7 @@ export default function AdminDashboard() {
       {/* Lista de Solicitações */}
       <div className="bg-dark-lighter p-6 rounded-lg">
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">Últimas Solicitações</h2>
+          <h2 className="text-xl font-semibold">Histórico de Solicitações</h2>
           <div className="flex gap-4">
             <div className="relative">
               <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -225,16 +213,16 @@ export default function AdminDashboard() {
           <table className="w-full">
             <thead>
               <tr className="text-left border-b border-gray-700">
-                <th className="pb-3">Usuário</th>
                 <th className="pb-3">Status</th>
                 <th className="pb-3">Data</th>
                 <th className="pb-3">Descrição</th>
+                <th className="pb-3">Imagem</th>
+                <th className="pb-3">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
               {filteredRequests.map((request) => (
                 <tr key={request.id} className="hover:bg-dark">
-                  <td className="py-3">{request.userName}</td>
                   <td className="py-3">
                     <span className={`px-2 py-1 rounded-full text-xs
                       ${request.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
@@ -252,12 +240,125 @@ export default function AdminDashboard() {
                     {format(request.createdAt.toDate(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                   </td>
                   <td className="py-3">{request.description}</td>
+                  <td className="py-3">
+                    {request.imageUrl && (
+                      <img 
+                        src={request.imageUrl} 
+                        alt="Preview" 
+                        className="w-16 h-16 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity"
+                        onClick={() => window.open(request.imageUrl, '_blank')}
+                      />
+                    )}
+                  </td>
+                  <td className="py-3">
+                    <button
+                      onClick={() => {
+                        setSelectedRequest(request);
+                        setIsModalOpen(true);
+                      }}
+                      className="flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span>Detalhes</span>
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Modal de Detalhes */}
+      {isModalOpen && selectedRequest && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-black bg-opacity-30" onClick={() => setIsModalOpen(false)} />
+            
+            <div className="relative bg-dark-lighter p-6 rounded-lg max-w-2xl w-full">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold">Detalhes da Solicitação</h2>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="p-1 hover:bg-dark rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm text-gray-400">Status</h3>
+                  <span className={`inline-block mt-1 px-2 py-1 rounded-full text-xs
+                    ${selectedRequest.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
+                      selectedRequest.status === 'in_progress' ? 'bg-blue-500/20 text-blue-500' :
+                      selectedRequest.status === 'completed' ? 'bg-green-500/20 text-green-500' :
+                      'bg-red-500/20 text-red-500'
+                    }`}
+                  >
+                    {selectedRequest.status === 'pending' ? 'Pendente' :
+                     selectedRequest.status === 'in_progress' ? 'Em Andamento' :
+                     selectedRequest.status === 'completed' ? 'Concluída' : 'Rejeitada'}
+                  </span>
+                </div>
+
+                <div>
+                  <h3 className="text-sm text-gray-400">Data da Solicitação</h3>
+                  <p className="mt-1">
+                    {format(selectedRequest.createdAt.toDate(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-sm text-gray-400">Descrição</h3>
+                  <p className="mt-1">{selectedRequest.description}</p>
+                </div>
+
+                {selectedRequest.reference && (
+                  <div>
+                    <h3 className="text-sm text-gray-400">Referência</h3>
+                    <p className="mt-1">{selectedRequest.reference}</p>
+                  </div>
+                )}
+
+                {selectedRequest.imageUrl && (
+                  <div>
+                    <h3 className="text-sm text-gray-400">Imagem</h3>
+                    <img 
+                      src={selectedRequest.imageUrl} 
+                      alt="Preview" 
+                      className="mt-2 max-w-full h-auto rounded-lg cursor-pointer hover:opacity-75 transition-opacity"
+                      onClick={() => window.open(selectedRequest.imageUrl, '_blank')}
+                    />
+                  </div>
+                )}
+
+                {selectedRequest.comments && selectedRequest.comments.length > 0 && (
+                  <div>
+                    <h3 className="text-sm text-gray-400">Comentários</h3>
+                    <div className="mt-2 space-y-2">
+                      {selectedRequest.comments.map((comment, index) => (
+                        <div key={index} className="bg-dark p-3 rounded-lg">
+                          {comment}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 rounded-lg bg-dark text-white hover:bg-dark-accent transition-colors"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -12,7 +12,7 @@ export default function NewRequest() {
   const [formData, setFormData] = useState({
     type: '',
     description: '',
-    referenceImage: '',
+    referenceUrls: [''], // Array para múltiplas URLs
     driveUrl: '' // Adicionado campo para URL do Google Drive
   });
   const [loading, setLoading] = useState(true);
@@ -41,6 +41,31 @@ export default function NewRequest() {
     return <div>Loading...</div>;
   }
 
+  const addReferenceUrl = () => {
+    setFormData(prev => ({
+      ...prev,
+      referenceUrls: [...prev.referenceUrls, '']
+    }));
+  };
+
+  const updateReferenceUrl = (index: number, value: string) => {
+    setFormData(prev => {
+      const newUrls = [...prev.referenceUrls];
+      newUrls[index] = value;
+      return {
+        ...prev,
+        referenceUrls: newUrls
+      };
+    });
+  };
+
+  const removeReferenceUrl = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      referenceUrls: prev.referenceUrls.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -57,7 +82,8 @@ export default function NewRequest() {
         userEmail: user?.email,
         userName: userData?.name || user?.displayName || user?.email,
         status: 'pending',
-        createdAt: new Date()
+        createdAt: new Date(),
+        read: false // Adicionando o campo read como false por padrão
       });
 
       toast.success('Solicitação enviada com sucesso!');
@@ -86,10 +112,21 @@ export default function NewRequest() {
             required
           >
             <option value="">Selecione o tipo</option>
-            <option value="pixel-art">Pixel Art</option>
-            <option value="illustration">Ilustração</option>
-            <option value="animation">Animação</option>
+            <option value="feed">Arte para Feed (Instagram/Facebook)</option>
+            <option value="stories">Arte para Stories (Instagram/Facebook)</option>
+            <option value="feed-stories">Arte para Feed + Stories (Instagram/Facebook)</option>
+            <option value="motion">Motion Design (Arte Animada)</option>
           </select>
+          <p className="mt-2 text-sm text-gray-400">
+            {formData.type === 'feed' && 
+              "Arte estática para publicações no feed do Instagram e Facebook. Ideal para posts informativos, promocionais ou conteúdo que ficará permanente nos seus perfis."}
+            {formData.type === 'stories' && 
+              "Arte vertical otimizada para stories do Instagram e Facebook. Perfeita para conteúdo temporário, promoções rápidas ou interações com seus seguidores."}
+            {formData.type === 'feed-stories' && 
+              "Pacote completo com arte para feed e stories do Instagram e Facebook. Ideal para campanhas que precisam de presença em todos os formatos das redes sociais."}
+            {formData.type === 'motion' && 
+              "Artes animadas que dão vida ao seu conteúdo. Ótimo para chamar atenção e aumentar o engajamento em todas as redes sociais (Instagram e Facebook)."}
+          </p>
         </div>
 
         <div>
@@ -107,15 +144,41 @@ export default function NewRequest() {
 
         <div>
           <label className="block text-sm font-medium mb-2">
-            Imagem de Referência
+            Imagens de Referência
           </label>
-          <input
-            type="text"
-            value={formData.referenceImage}
-            onChange={(e) => setFormData({ ...formData, referenceImage: e.target.value })}
-            className="w-full p-2 bg-dark-lighter rounded-lg border border-gray-700 focus:outline-none focus:border-primary"
-            placeholder="URL da imagem de referência"
-          />
+          {formData.referenceUrls.map((url, index) => (
+            <div key={index} className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={url}
+                onChange={(e) => updateReferenceUrl(index, e.target.value)}
+                className="flex-1 p-2 bg-dark-lighter rounded-lg border border-gray-700 focus:outline-none focus:border-primary"
+                placeholder="URL da imagem de referência"
+              />
+              {formData.referenceUrls.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeReferenceUrl(index)}
+                  className="p-2 text-red-500 hover:text-red-400"
+                  title="Remover URL"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addReferenceUrl}
+            className="mt-2 text-primary hover:text-primary-light flex items-center gap-1 text-sm"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+            </svg>
+            Adicionar outra URL
+          </button>
         </div>
 
         <div>

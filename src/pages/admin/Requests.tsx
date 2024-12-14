@@ -6,6 +6,8 @@ import { useNotification } from '../../contexts/NotificationContext';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import RequestDetailsModal from '../../components/RequestDetailsModal';
+import { Card, CardHeader, CardContent } from '../../components/ui/card';
 
 interface Request {
   id: string;
@@ -20,6 +22,8 @@ interface Request {
 
 export default function Requests() {
   const [requests, setRequests] = useState<Request[]>([]);
+  const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -32,11 +36,13 @@ export default function Requests() {
       return;
     }
 
+    console.log('Setting up requests listener');
     const requestsRef = collection(db, 'requests');
     let q = query(requestsRef, orderBy('createdAt', 'desc'));
 
     // If a user is selected, only show their requests
     if (selectedUserId) {
+      console.log('Filtering requests for user:', selectedUserId);
       q = query(
         requestsRef,
         where('userId', '==', selectedUserId),
@@ -45,6 +51,7 @@ export default function Requests() {
     }
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
+      console.log('Received snapshot with', snapshot.docs.length, 'requests');
       const requestsData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -52,18 +59,24 @@ export default function Requests() {
 
       setRequests(requestsData);
 
-      // Only mark requests as read if they're being viewed
-      if (selectedUserId) {
-        const unreadDocs = snapshot.docs.filter(doc => !doc.data().read);
-        for (const unreadDoc of unreadDocs) {
-          await updateDoc(doc(db, 'requests', unreadDoc.id), {
-            read: true
-          });
-        }
+      // Marcar solicitações como lidas quando visualizadas
+      const unreadDocs = snapshot.docs.filter(doc => !doc.data().read);
+      console.log('Found', unreadDocs.length, 'unread requests to mark as read');
+
+      for (const unreadDoc of unreadDocs) {
+        console.log('Marking request as read:', unreadDoc.id);
+        await updateDoc(doc(db, 'requests', unreadDoc.id), {
+          read: true
+        });
       }
+    }, (error) => {
+      console.error('Error in requests listener:', error);
     });
 
-    return () => unsubscribe();
+    return () => {
+      console.log('Cleaning up requests listener');
+      unsubscribe();
+    };
   }, [isAdmin, navigate, selectedUserId]);
 
   const getStatusColor = (status: string) => {
@@ -88,25 +101,44 @@ export default function Requests() {
     });
   };
 
+  const handleRequestUpdate = (requestId: string, newData: Partial<Request>) => {
+    setRequests(prevRequests => 
+      prevRequests.map(req => 
+        req.id === requestId ? { ...req, ...newData } : req
+      )
+    );
+  };
+
+  const truncateDescription = (description: string, maxLength: number = 100) => {
+    if (description.length <= maxLength) return description;
+    return description.slice(0, maxLength) + '...';
+  };
+
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4 flex items-center gap-2">
-        Requests
-        {unreadRequests > 0 && (
-          <Badge variant="destructive">{unreadRequests} new</Badge>
-        )}
-      </h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold flex items-center gap-2">
+          Pedidos
+          {unreadRequests > 0 && (
+            <Badge variant="destructive">{unreadRequests} novos</Badge>
+          )}
+        </h1>
+      </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {requests.map((request) => (
-          <div
+          <Card
             key={request.id}
-            className={`bg-white dark:bg-gray-800 p-4 rounded-lg shadow flex flex-col gap-4 ${
+            className={`cursor-pointer transition-all hover:shadow-lg ${
               !request.read ? 'ring-2 ring-blue-500' : ''
             }`}
+            onClick={() => {
+              setSelectedRequest(request);
+              setIsModalOpen(true);
+            }}
           >
-            <div className="flex items-start justify-between">
-              <div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div className="flex flex-col">
                 <h3 className="font-semibold">{request.userName}</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   {request.createdAt?.toDate().toLocaleString()}
@@ -115,47 +147,37 @@ export default function Requests() {
               <Badge className={getStatusColor(request.status)}>
                 {request.status}
               </Badge>
-            </div>
-
-            <p className="text-gray-700 dark:text-gray-300">{request.description}</p>
-
-            {request.imageUrl && (
-              <img
-                src={request.imageUrl}
-                alt="Request reference"
-                className="w-full max-w-md rounded-lg"
-              />
-            )}
-
-            <div className="flex gap-2">
-              {request.status === 'pending' && (
-                <>
-                  <Button
-                    onClick={() => handleStatusChange(request.id, 'in_progress')}
-                    variant="default"
-                  >
-                    Start Working
-                  </Button>
-                  <Button
-                    onClick={() => handleStatusChange(request.id, 'rejected')}
-                    variant="destructive"
-                  >
-                    Reject
-                  </Button>
-                </>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-700 dark:text-gray-300">
+                {truncateDescription(request.description)}
+              </p>
+              {request.imageUrl && (
+                <div className="mt-2 aspect-video relative overflow-hidden rounded-md">
+                  <img
+                    src={request.imageUrl}
+                    alt="Preview"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                </div>
               )}
-              {request.status === 'in_progress' && (
-                <Button
-                  onClick={() => handleStatusChange(request.id, 'completed')}
-                  variant="default"
-                >
-                  Mark as Complete
-                </Button>
-              )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
+
+      {selectedRequest && (
+        <RequestDetailsModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedRequest(null);
+          }}
+          request={selectedRequest}
+          onRequestUpdate={handleRequestUpdate}
+          onStatusChange={handleStatusChange}
+        />
+      )}
     </div>
   );
 }

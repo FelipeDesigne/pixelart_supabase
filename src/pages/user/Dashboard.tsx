@@ -4,6 +4,7 @@ import Overview from './Overview';
 import NewRequest from './NewRequest';
 import Profile from './Profile';
 import Settings from './Settings';
+import Requests from './Requests';
 
 export default function UserDashboard() {
   return (
@@ -13,6 +14,7 @@ export default function UserDashboard() {
         <Routes>
           <Route path="/" element={<Overview />} />
           <Route path="/new-request" element={<NewRequest />} />
+          <Route path="/requests" element={<Requests />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>

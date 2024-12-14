@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 import { 
   Home,
   Settings,
@@ -12,12 +13,16 @@ import {
 export default function UserSidebar() {
   const { signOut } = useAuth();
   const location = useLocation();
+  const { unreadAdminMessages } = useNotification();
+
+  console.log('UserSidebar - unreadAdminMessages:', unreadAdminMessages);
 
   const links = [
     { name: 'Início', icon: Home, path: '/user' },
     { name: 'Perfil', icon: UserCircle, path: '/user/profile' },
     { name: 'Nova Solicitação', icon: FileText, path: '/user/new-request' },
-    { name: 'Chat', icon: MessageCircle, path: '/user/chat' },
+    { name: 'Solicitações', icon: FileText, path: '/user/requests' },
+    { name: 'Chat', icon: MessageCircle, path: '/user/chat', badge: unreadAdminMessages },
     { name: 'Configurações', icon: Settings, path: '/user/settings' }
   ];
 
@@ -55,7 +60,12 @@ export default function UserSidebar() {
                     }`}
                 >
                   <Icon className="w-5 h-5" />
-                  <span>{link.name}</span>
+                  <span className="flex-1">{link.name}</span>
+                  {link.badge && link.badge > 0 && (
+                    <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-red-500 text-white text-xs">
+                      {link.badge}
+                    </span>
+                  )}
                 </Link>
               </li>
             );

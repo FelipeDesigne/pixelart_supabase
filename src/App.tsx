@@ -16,6 +16,7 @@ import Settings from './pages/user/Settings';
 import Profile from './pages/user/Profile';
 import NewRequest from './pages/user/NewRequest';
 import Chat from './pages/user/Chat';
+import UserRequests from './pages/user/Requests';
 import PrivateRoute from './components/PrivateRoute';
 import { useAuth } from './contexts/AuthContext';
 
@@ -60,6 +61,7 @@ function AppRoutes() {
           <Route path="settings" element={<Settings />} />
           <Route path="profile" element={<Profile />} />
           <Route path="new-request" element={<NewRequest />} />
+          <Route path="requests" element={<UserRequests />} />
           <Route path="chat" element={<Chat />} />
         </Route>
 
@@ -73,11 +75,11 @@ export default function App() {
   return (
     <Router>
       <ThemeProvider>
-        <NotificationProvider>
-          <AuthProvider>
+        <AuthProvider>
+          <NotificationProvider>
             <AppRoutes />
-          </AuthProvider>
-        </NotificationProvider>
+          </NotificationProvider>
+        </AuthProvider>
       </ThemeProvider>
     </Router>
   );

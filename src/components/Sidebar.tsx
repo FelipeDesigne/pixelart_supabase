@@ -15,97 +15,106 @@ import {
   Home,
   FolderGit2
 } from 'lucide-react';
+import ConfirmDialog from './ConfirmDialog';
 
 export default function Sidebar() {
   const { signOut, isAdmin, user } = useAuth();
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const location = useLocation();
-  const [driveUrl, setDriveUrl] = useState<string | null>(null);
+  const [userName, setUserName] = useState('');
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (!user) return;
-      try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const fetchUserName = async () => {
+      if (user?.uid) {
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
         if (userDoc.exists()) {
-          setDriveUrl(userDoc.data().driveUrl || null);
+          setUserName(userDoc.data().name);
         }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
       }
     };
 
-    fetchUserData();
+    fetchUserName();
   }, [user]);
+
+  const handleLogout = () => {
+    setShowConfirmDialog(true);
+  };
+
+  const confirmLogout = async () => {
+    await signOut();
+    setShowConfirmDialog(false);
+  };
 
   const adminLinks = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
-    { name: 'Art Requests', icon: FileText, path: '/admin/requests' },
-    { name: 'Users', icon: Users, path: '/admin/users' },
-    { name: 'Settings', icon: Settings, path: '/admin/settings' },
+    { name: 'Usuários', icon: Users, path: '/admin/users' },
   ];
 
   const userLinks = [
-    { name: 'Dashboard', icon: Home, path: '/user' },
-    { name: 'New Request', icon: PlusCircle, path: '/user/new-request' },
+    { name: 'Início', icon: Home, path: '/user' },
+    { name: 'Perfil', icon: User, path: '/user/profile' },
+    { name: 'Nova Solicitação', icon: PlusCircle, path: '/user/new-request' },
+    { name: 'Solicitações', icon: FileText, path: '/user/requests' },
     { name: 'Chat', icon: MessageCircle, path: '/user/chat' },
-    { name: 'Settings', icon: Settings, path: '/user/settings' },
-    { name: 'Profile', icon: User, path: '/user/profile' },
+    { name: 'Configurações', icon: Settings, path: '/user/settings' },
   ];
 
   const links = isAdmin ? adminLinks : userLinks;
 
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
-
   return (
-    <div className="w-64 min-h-screen bg-dark-lighter p-4 flex flex-col fixed">
-      <div className="flex items-center gap-2 mb-8 px-2">
-        <div className="text-primary font-bold text-xl">Pixel Art</div>
-      </div>
+    <>
+      <aside className="fixed left-0 top-0 h-screen w-64 bg-dark-lighter p-4">
+        <div className="flex items-center gap-2 mb-8">
+          <FolderGit2 className="w-8 h-8 text-primary" />
+          <span className="text-xl font-bold">PixelArt</span>
+        </div>
 
-      <nav className="flex-1 space-y-2">
-        {links.map((link) => (
-          <Link
-            key={link.path}
-            to={link.path}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              isActive(link.path)
-                ? 'bg-primary text-dark'
-                : 'text-gray-300 hover:bg-dark-accent'
-            }`}
+        <nav className="space-y-2">
+          {links.map((link) => {
+            const Icon = link.icon;
+            const isActive = location.pathname === link.path;
+            
+            return (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors
+                  ${isActive 
+                    ? 'bg-primary text-white' 
+                    : 'text-gray-400 hover:text-white hover:bg-dark'
+                  }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span>{link.name}</span>
+              </Link>
+            );
+          })}
+
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-gray-400 hover:text-white hover:bg-dark w-full"
           >
-            <link.icon className="h-5 w-5" />
-            <span>{link.name}</span>
-          </Link>
-        ))}
+            <LogOut className="w-5 h-5" />
+            <span>Sair</span>
+          </button>
+        </nav>
 
-        {!isAdmin && driveUrl && (
-          <div className="px-2 py-4">
-            <a
-              href={driveUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-3 px-4 py-3 rounded-lg transition-all
-                bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700
-                text-white font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-            >
-              <FolderGit2 className="h-5 w-5" />
-              <span>Acessar Google Drive</span>
-            </a>
+        <div className="absolute bottom-4 left-4 right-4">
+          <div className="bg-dark p-4 rounded-lg">
+            <div className="text-sm text-gray-400">Logado como</div>
+            <div className="font-medium truncate">{userName}</div>
           </div>
-        )}
+        </div>
+      </aside>
 
-        <div className="flex-1" />
-
-        <button
-          onClick={() => signOut()}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-dark-accent transition-colors mt-8"
-        >
-          <LogOut className="h-5 w-5" />
-          <span>Sign Out</span>
-        </button>
-      </nav>
-    </div>
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        onClose={() => setShowConfirmDialog(false)}
+        onConfirm={confirmLogout}
+        title="Confirmar Logout"
+        message="Tem certeza que deseja sair?"
+      />
+    </>
   );
 }

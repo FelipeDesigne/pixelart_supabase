@@ -25,6 +25,9 @@ export default function AdminSidebar({ isOpen, isDarkMode }: AdminSidebarProps) 
   const { unreadMessages, unreadByUser, unreadRequests, unreadRequestsByUser } = useNotification();
   const [showRequestNotifications, setShowRequestNotifications] = useState(false);
 
+  console.log('AdminSidebar - unreadMessages:', unreadMessages);
+  console.log('AdminSidebar - unreadByUser:', unreadByUser);
+
   const links = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
     { name: 'Usuários', icon: Users, path: '/admin/users' },

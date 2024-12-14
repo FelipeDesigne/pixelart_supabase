@@ -21,7 +21,7 @@ export default function Login() {
       navigate(isAdmin ? '/admin' : '/user', { replace: true });
     } catch (error: any) {
       console.error('Error signing in:', error);
-      toast.error(error.message || 'Erro ao fazer login');
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }

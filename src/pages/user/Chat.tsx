@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { collection, query, orderBy, onSnapshot, where, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, where, addDoc, serverTimestamp, Timestamp, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Send, Loader2 } from 'lucide-react';
@@ -30,6 +30,39 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Marcar mensagens como lidas
+  useEffect(() => {
+    if (!user) return;
+
+    const markMessagesAsRead = async () => {
+      try {
+        console.log('Marking messages as read for user:', user.uid);
+        const messagesRef = collection(db, 'messages');
+        const q = query(
+          messagesRef,
+          where('chatId', '==', user.uid),
+          where('isAdmin', '==', true),
+          where('read', '==', false)
+        );
+
+        const snapshot = await getDocs(q);
+        console.log('Found', snapshot.size, 'unread messages to mark as read');
+
+        const batch = snapshot.docs.map(async (doc) => {
+          console.log('Marking message as read:', doc.id);
+          await updateDoc(doc.ref, { read: true });
+        });
+
+        await Promise.all(batch);
+        console.log('All messages marked as read');
+      } catch (error) {
+        console.error('Error marking messages as read:', error);
+      }
+    };
+
+    markMessagesAsRead();
+  }, [user]);
+
   useEffect(() => {
     console.log('Chat useEffect triggered, user:', user);
     
@@ -42,7 +75,8 @@ export default function Chat() {
     const messagesRef = collection(db, 'messages');
     const q = query(
       messagesRef,
-      where('chatId', '==', user.uid)
+      where('chatId', '==', user.uid),
+      orderBy('createdAt', 'asc')
     );
 
     try {
@@ -58,12 +92,8 @@ export default function Chat() {
           };
         }) as Message[];
         
-        const sortedMessages = messagesList.sort((a, b) => 
-          (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0)
-        );
-        
-        console.log('Setting messages:', sortedMessages);
-        setMessages(sortedMessages);
+        console.log('Setting messages:', messagesList);
+        setMessages(messagesList);
         setLoading(false);
         scrollToBottom();
       }, (error) => {

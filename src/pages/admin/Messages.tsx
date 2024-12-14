@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { collection, query, orderBy, onSnapshot, where, doc, updateDoc, Timestamp, addDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, where, doc, updateDoc, Timestamp, addDoc, writeBatch, serverTimestamp, getDocs, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { Send, Loader2 } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
-import toast from 'react-hot-toast'; // Import toast
+import { Send, Loader2, Trash2 } from 'lucide-react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 interface Message {
   id: string;
@@ -27,7 +27,10 @@ interface Chat {
 }
 
 export default function Messages() {
-  const { currentUser } = useAuth();
+  const { user, isAdmin } = useAuth();
+  console.log('Messages Component - User:', user?.email);
+  console.log('Messages Component - Is Admin:', isAdmin);
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [chats, setChats] = useState<Chat[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -37,6 +40,32 @@ export default function Messages() {
   const [sendingMessage, setSendingMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Verificação de autenticação
+  useEffect(() => {
+    if (!user || !isAdmin) {
+      console.log('Not authenticated or not admin, redirecting to login');
+      console.log('User:', user?.email);
+      console.log('Is Admin:', isAdmin);
+      navigate('/login');
+      return;
+    }
+  }, [user, isAdmin, navigate]);
+
+  // Se não estiver autenticado, não renderiza nada
+  if (!user || !isAdmin) {
+    return null;
+  }
+
+  useEffect(() => {
+    console.log('=== Debug Authentication ===');
+    console.log('User:', user);
+    console.log('Email:', user?.email);
+    console.log('UID:', user?.uid);
+  }, [user]);
+
+  console.log('Debug - User:', user?.email);
+  console.log('Debug - User ID:', user?.uid);
 
   // Scroll to bottom of messages
   const scrollToBottom = () => {
@@ -154,32 +183,92 @@ export default function Messages() {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedChat || !currentUser) return;
+    
+    console.log('Debug - Sending message...');
+    console.log('Debug - Message:', newMessage);
+    console.log('Debug - Selected Chat:', selectedChat);
+    console.log('Debug - User:', user);
+    
+    // Validações mais detalhadas
+    if (!newMessage.trim()) {
+      toast.error('Digite uma mensagem');
+      return;
+    }
+    
+    if (!selectedChat) {
+      toast.error('Selecione um chat para enviar a mensagem');
+      return;
+    }
+    
+    if (!user) {
+      toast.error('Você precisa estar autenticado');
+      return;
+    }
 
     setSendingMessage(true);
     try {
-      console.log('Attempting to send message as admin');
+      console.log('=== Debug Send Message ===');
+      console.log('Message Data:', {
+        chatId: selectedChat.id,
+        text: newMessage.trim(),
+        senderId: user.uid,
+        senderName: 'Admin',
+        isAdmin: true,
+        createdAt: serverTimestamp(),
+        read: false
+      });
+      
+      // Criando a referência da coleção messages
+      const messagesRef = collection(db, 'messages');
+      
       const messageData = {
         chatId: selectedChat.id,
         text: newMessage.trim(),
-        senderId: currentUser.uid,
+        senderId: user.uid,
         senderName: 'Admin',
         isAdmin: true,
         createdAt: serverTimestamp(),
         read: false
       };
-      console.log('Message data to send:', messageData);
 
-      await addDoc(collection(db, 'messages'), messageData);
-      console.log('Message sent successfully');
-
+      // Adicionando a mensagem ao Firestore
+      const docRef = await addDoc(messagesRef, messageData);
+      console.log('Message added with ID:', docRef.id);
+      
+      // Limpa o campo de mensagem e rola para o final
       setNewMessage('');
       scrollToBottom();
+      
+      toast.success('Mensagem enviada com sucesso');
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Erro ao enviar mensagem:', error);
       toast.error('Erro ao enviar mensagem. Tente novamente.');
     } finally {
       setSendingMessage(false);
+    }
+  };
+
+  const handleDeleteChat = async () => {
+    if (!selectedChat) return;
+
+    if (window.confirm('Tem certeza que deseja excluir todo o histórico de mensagens com este usuário?')) {
+      try {
+        const messagesRef = collection(db, 'messages');
+        const q = query(messagesRef, where('chatId', '==', selectedChat.id));
+        const querySnapshot = await getDocs(q);
+        
+        const batch = writeBatch(db);
+        querySnapshot.docs.forEach((doc) => {
+          batch.delete(doc.ref);
+        });
+        
+        await batch.commit();
+        setSelectedChat(null);
+        toast.success('Chat excluído com sucesso');
+      } catch (error) {
+        console.error('Error deleting chat:', error);
+        toast.error('Erro ao excluir chat');
+      }
     }
   };
 
@@ -223,8 +312,15 @@ export default function Messages() {
       {/* Chat messages */}
       {selectedChat ? (
         <div className="flex-1 flex flex-col bg-gray-50 dark:bg-dark">
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-lighter">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-lighter flex justify-between items-center">
             <h2 className="font-medium">{selectedChat.userName}</h2>
+            <button
+              onClick={handleDeleteChat}
+              className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+              title="Excluir chat"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
           </div>
 
           <div 

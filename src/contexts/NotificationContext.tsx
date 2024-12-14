@@ -17,6 +17,7 @@ interface NotificationContextType {
     count: number;
     status: string;
   }>;
+  unreadAdminMessages: number;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -26,21 +27,24 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [unreadByUser, setUnreadByUser] = useState<NotificationContextType['unreadByUser']>([]);
   const [unreadRequests, setUnreadRequests] = useState(0);
   const [unreadRequestsByUser, setUnreadRequestsByUser] = useState<NotificationContextType['unreadRequestsByUser']>([]);
-  const { isAdmin } = useAuth();
+  const [unreadAdminMessages, setUnreadAdminMessages] = useState(0);
+  const { isAdmin, user } = useAuth();
 
-  // Track unread messages
+  // Track unread messages for admin
   useEffect(() => {
     if (!isAdmin) return;
 
+    console.log('Setting up unread messages listener');
     const messagesRef = collection(db, 'messages');
     const q = query(
       messagesRef,
       where('read', '==', false),
-      where('isAdmin', '==', false),
-      orderBy('createdAt', 'desc')
+      where('isAdmin', '==', false)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      console.log('Unread messages snapshot:', snapshot.size, 'messages');
+      
       // Count total unread messages
       setUnreadMessages(snapshot.size);
 
@@ -54,10 +58,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       snapshot.docs.forEach(doc => {
         const data = doc.data();
         const chatId = data.chatId;
+        console.log('Message data:', data);
         
         if (!userMessages.has(chatId)) {
           userMessages.set(chatId, {
-            senderName: data.senderName,
+            senderName: data.senderName || 'Usuário',
             count: 1,
             chatId: chatId
           });
@@ -67,27 +72,67 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         }
       });
 
-      setUnreadByUser(Array.from(userMessages.values()));
+      const unreadByUserArray = Array.from(userMessages.values());
+      console.log('Unread messages by user:', unreadByUserArray);
+      setUnreadByUser(unreadByUserArray);
+    }, (error) => {
+      console.error('Error in messages listener:', error);
     });
 
-    return () => unsubscribe();
+    return () => {
+      console.log('Cleaning up unread messages listener');
+      unsubscribe();
+    };
   }, [isAdmin]);
+
+  // Track unread messages from admin for user
+  useEffect(() => {
+    if (isAdmin || !user) return;
+
+    console.log('Setting up unread admin messages listener for user:', user.uid);
+    const messagesRef = collection(db, 'messages');
+    const q = query(
+      messagesRef,
+      where('chatId', '==', user.uid),
+      where('read', '==', false),
+      where('isAdmin', '==', true)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      console.log('Unread admin messages:', snapshot.size);
+      setUnreadAdminMessages(snapshot.size);
+    }, (error) => {
+      console.error('Error in admin messages listener:', error);
+    });
+
+    return () => {
+      console.log('Cleaning up unread admin messages listener');
+      unsubscribe();
+    };
+  }, [isAdmin, user]);
 
   // Track unread requests
   useEffect(() => {
     if (!isAdmin) return;
 
+    console.log('Setting up unread requests listener');
     const requestsRef = collection(db, 'requests');
     const q = query(
       requestsRef,
-      where('read', '==', false),
-      where('status', 'in', ['pending', 'in_progress']),
-      orderBy('createdAt', 'desc')
+      where('read', '==', false)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      console.log('Unread requests snapshot:', snapshot.size, 'requests');
+      
       // Count total unread requests
-      setUnreadRequests(snapshot.size);
+      const unreadRequestsCount = snapshot.docs.filter(doc => {
+        const data = doc.data();
+        return data.status === 'pending' || data.status === 'in_progress';
+      }).length;
+
+      console.log('Unread requests count:', unreadRequestsCount);
+      setUnreadRequests(unreadRequestsCount);
 
       // Group unread requests by user
       const userRequests = new Map<string, {
@@ -97,27 +142,40 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         status: string;
       }>();
 
-      snapshot.docs.forEach(doc => {
-        const data = doc.data();
-        const userId = data.userId;
-        
-        if (!userRequests.has(userId)) {
-          userRequests.set(userId, {
-            userName: data.userName,
-            userId: userId,
-            count: 1,
-            status: data.status
-          });
-        } else {
-          const current = userRequests.get(userId)!;
-          current.count++;
-        }
-      });
+      snapshot.docs
+        .filter(doc => {
+          const data = doc.data();
+          return data.status === 'pending' || data.status === 'in_progress';
+        })
+        .forEach(doc => {
+          const data = doc.data();
+          const userId = data.userId;
+          console.log('Request data:', data);
+          
+          if (!userRequests.has(userId)) {
+            userRequests.set(userId, {
+              userName: data.userName || 'Usuário',
+              userId: userId,
+              count: 1,
+              status: data.status
+            });
+          } else {
+            const current = userRequests.get(userId)!;
+            current.count++;
+          }
+        });
 
-      setUnreadRequestsByUser(Array.from(userRequests.values()));
+      const unreadRequestsByUserArray = Array.from(userRequests.values());
+      console.log('Unread requests by user:', unreadRequestsByUserArray);
+      setUnreadRequestsByUser(unreadRequestsByUserArray);
+    }, (error) => {
+      console.error('Error in requests listener:', error);
     });
 
-    return () => unsubscribe();
+    return () => {
+      console.log('Cleaning up unread requests listener');
+      unsubscribe();
+    };
   }, [isAdmin]);
 
   return (
@@ -126,7 +184,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         unreadMessages,
         unreadByUser,
         unreadRequests,
-        unreadRequestsByUser
+        unreadRequestsByUser,
+        unreadAdminMessages
       }}
     >
       {children}
