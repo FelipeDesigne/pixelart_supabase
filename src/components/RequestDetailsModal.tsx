@@ -194,13 +194,21 @@ export default function RequestDetailsModal({ isOpen, onClose, request: initialR
 
           {/* Ações */}
           <div className="flex gap-2 pt-4">
-            {request.status === 'pending' && (
+            {request.status !== 'completed' && (
               <>
                 <Button
                   onClick={() => handleStatusChange('in_progress')}
                   variant="default"
+                  className="bg-blue-500 hover:bg-blue-600"
                 >
-                  Começar a Trabalhar
+                  Em Progresso
+                </Button>
+                <Button
+                  onClick={() => handleStatusChange('completed')}
+                  variant="default"
+                  className="bg-green-500 hover:bg-green-600"
+                >
+                  Concluído
                 </Button>
                 <Button
                   onClick={() => handleStatusChange('rejected')}
@@ -210,13 +218,22 @@ export default function RequestDetailsModal({ isOpen, onClose, request: initialR
                 </Button>
               </>
             )}
-            {request.status === 'in_progress' && (
-              <Button
-                onClick={() => handleStatusChange('completed')}
-                variant="default"
-              >
-                Marcar como Concluído
-              </Button>
+            {request.status === 'completed' && (
+              <>
+                <Button
+                  onClick={() => handleStatusChange('in_progress')}
+                  variant="default"
+                  className="bg-blue-500 hover:bg-blue-600"
+                >
+                  Voltar para Em Progresso
+                </Button>
+                <Button
+                  onClick={() => handleStatusChange('rejected')}
+                  variant="destructive"
+                >
+                  Rejeitar
+                </Button>
+              </>
             )}
           </div>
         </div>
