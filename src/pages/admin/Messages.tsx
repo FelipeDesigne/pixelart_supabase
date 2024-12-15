@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { collection, query, orderBy, onSnapshot, where, addDoc, serverTimestamp, Timestamp, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, where, addDoc, serverTimestamp, Timestamp, getDocs, writeBatch, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
-import { Send, Loader2, MessageCircle } from 'lucide-react';
+import { Send, Loader2, MessageCircle, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -134,6 +134,28 @@ export default function Messages() {
     }
   };
 
+  const deleteChat = async () => {
+    if (!selectedUser || !window.confirm(`Tem certeza que deseja excluir todas as mensagens com ${selectedUser.name}?`)) return;
+
+    try {
+      const messagesRef = collection(db, 'messages');
+      const q = query(messagesRef, where('chatId', '==', selectedUser.id));
+      const snapshot = await getDocs(q);
+
+      const batch = writeBatch(db);
+      snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+
+      await batch.commit();
+      toast.success('Chat excluído com sucesso!');
+      setMessages([]);
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+      toast.error('Erro ao excluir o chat. Tente novamente.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -183,9 +205,18 @@ export default function Messages() {
       <div className="flex-1 flex flex-col">
         {selectedUser ? (
           <>
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-lighter">
-              <h3 className="font-medium">{selectedUser.name}</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{selectedUser.email}</p>
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-lighter flex justify-between items-center">
+              <div>
+                <h3 className="font-medium">{selectedUser.name}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{selectedUser.email}</p>
+              </div>
+              <button
+                onClick={deleteChat}
+                className="text-gray-500 hover:text-red-500 focus:outline-none"
+                title="Excluir chat"
+              >
+                <Trash2 size={20} />
+              </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-dark">
