@@ -1,21 +1,48 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Função auxiliar para verificar autenticação
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
     // Função auxiliar para verificar se o usuário é admin
     function isAdmin() {
-      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Regras para a coleção users
+    match /users/{userId} {
+      // Permitir leitura para usuários autenticados
+      allow read: if isAuthenticated();
+      
+      // Permitir listagem apenas para admins
+      allow list: if isAdmin();
+      
+      // Permitir escrita apenas para admins ou para o próprio usuário
+      allow write: if isAdmin() || request.auth.uid == userId;
     }
 
     // Regras para a coleção messages
     match /messages/{messageId} {
-      // Permitir leitura para usuários autenticados
-      allow read: if request.auth != null;
+      // Permitir leitura e listagem para usuários autenticados que são os destinatários ou admins
+      allow read, list: if isAuthenticated() && (
+        (resource == null) ||  // Allow reading non-existent documents
+        resource.data.chatId == request.auth.uid || 
+        isAdmin()
+      );
       
-      // Permitir escrita para admins e para o próprio usuário do chat
-      allow write: if request.auth != null && (
-        isAdmin() || 
-        request.resource.data.senderId == request.auth.uid
+      // Permitir criação para usuários autenticados que são os remetentes ou admins
+      allow create: if isAuthenticated() && (
+        (request.resource.data.isAdmin == true && isAdmin()) ||  // Admin sending message
+        (!request.resource.data.isAdmin && request.resource.data.senderId == request.auth.uid)  // User sending message
+      );
+      
+      // Permitir atualização para usuários autenticados que são os destinatários ou admins
+      allow update: if isAuthenticated() && (
+        (resource.data.chatId == request.auth.uid && request.resource.data.read == true) || 
+        isAdmin()
       );
       
       // Permitir exclusão apenas para admins
@@ -24,26 +51,53 @@ service cloud.firestore {
 
     // Regras para a coleção requests
     match /requests/{requestId} {
-      // Permitir leitura para usuários autenticados
-      allow read: if request.auth != null;
+      // Permitir leitura e listagem para usuários autenticados que são os destinatários ou admins
+      allow read, list: if isAuthenticated() && (
+        request.auth.uid == resource.data.userId || 
+        isAdmin()
+      );
       
       // Permitir criação para usuários autenticados
-      allow create: if request.auth != null;
+      allow create: if isAuthenticated();
       
-      // Permitir atualização e exclusão apenas para admins
-      allow update, delete: if isAdmin();
+      // Permitir atualização para usuários autenticados que são os destinatários ou admins
+      allow update: if isAuthenticated() && (
+        request.auth.uid == resource.data.userId || 
+        isAdmin()
+      );
+      
+      // Permitir exclusão apenas para admins
+      allow delete: if isAdmin();
     }
 
-    // Regras para a coleção users
-    match /users/{userId} {
-      // Permitir leitura para usuários autenticados
-      allow read: if request.auth != null;
+    // Regras para a coleção arts
+    match /arts/{artId} {
+      // Permitir leitura para todos
+      allow read: if true;
       
-      // Permitir escrita apenas para admins ou para o próprio usuário
-      allow write: if request.auth != null && (
-        isAdmin() || 
-        request.auth.uid == userId
+      // Permitir escrita apenas para admins
+      allow write: if isAdmin();
+    }
+
+    // Regras para a coleção notifications
+    match /notifications/{notificationId} {
+      // Permitir leitura e listagem para usuários autenticados que são os destinatários ou admins
+      allow read, list: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || 
+        isAdmin()
       );
+      
+      // Permitir criação apenas para admins
+      allow create: if isAdmin();
+      
+      // Permitir atualização para usuários autenticados que são os destinatários ou admins
+      allow update: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || 
+        isAdmin()
+      );
+      
+      // Permitir exclusão apenas para admins
+      allow delete: if isAdmin();
     }
   }
 }

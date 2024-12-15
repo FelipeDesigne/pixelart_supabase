@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, where } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, where, writeBatch } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { Badge } from '../../components/ui/badge';
@@ -51,7 +51,6 @@ export default function Requests() {
     }
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
-      console.log('Received snapshot with', snapshot.docs.length, 'requests');
       const requestsData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -59,24 +58,21 @@ export default function Requests() {
 
       setRequests(requestsData);
 
-      // Marcar solicitações como lidas quando visualizadas
-      const unreadDocs = snapshot.docs.filter(doc => !doc.data().read);
-      console.log('Found', unreadDocs.length, 'unread requests to mark as read');
-
-      for (const unreadDoc of unreadDocs) {
-        console.log('Marking request as read:', unreadDoc.id);
-        await updateDoc(doc(db, 'requests', unreadDoc.id), {
-          read: true
-        });
+      // Marcar pedidos como lidos
+      const batch = writeBatch(db);
+      let hasUnread = false;
+      snapshot.docs.forEach(doc => {
+        if (!doc.data().read) {
+          hasUnread = true;
+          batch.update(doc.ref, { read: true });
+        }
+      });
+      if (hasUnread) {
+        await batch.commit();
       }
-    }, (error) => {
-      console.error('Error in requests listener:', error);
     });
 
-    return () => {
-      console.log('Cleaning up requests listener');
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, [isAdmin, navigate, selectedUserId]);
 
   const getStatusColor = (status: string) => {

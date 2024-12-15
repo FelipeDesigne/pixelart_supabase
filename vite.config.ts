@@ -8,5 +8,8 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true
   },
+  server: {
+    port: 5174 // Porta diferente da padrão (5173)
+  },
   base: '/PixelArt/',
 });

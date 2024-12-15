@@ -1,34 +1,33 @@
-import { Link, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
-import { 
+import {
   Home,
-  Settings,
-  UserCircle,
   FileText,
+  User,
+  Settings,
   MessageCircle,
+  Image,
   LogOut
 } from 'lucide-react';
 
 export default function UserSidebar() {
-  const { signOut } = useAuth();
-  const location = useLocation();
+  const { user, signOut } = useAuth();
   const { unreadAdminMessages } = useNotification();
 
-  console.log('UserSidebar - unreadAdminMessages:', unreadAdminMessages);
-
-  const links = [
+  const menuItems = [
     { name: 'Início', icon: Home, path: '/user' },
-    { name: 'Perfil', icon: UserCircle, path: '/user/profile' },
-    { name: 'Nova Solicitação', icon: FileText, path: '/user/new-request' },
+    { name: 'Perfil', icon: User, path: '/user/profile' },
+    { name: 'Minhas Artes', icon: Image, path: '/user/profile#gallery' },
     { name: 'Solicitações', icon: FileText, path: '/user/requests' },
-    { name: 'Chat', icon: MessageCircle, path: '/user/chat', badge: unreadAdminMessages },
+    { 
+      name: 'Chat', 
+      icon: MessageCircle, 
+      path: '/user/chat',
+      badge: unreadAdminMessages > 0 ? unreadAdminMessages : undefined
+    },
     { name: 'Configurações', icon: Settings, path: '/user/settings' }
   ];
-
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
 
   const handleSignOut = async () => {
     const confirmed = window.confirm('Tem certeza que deseja sair?');
@@ -38,48 +37,45 @@ export default function UserSidebar() {
   };
 
   return (
-    <div className="w-64 min-h-screen p-4 fixed bg-white dark:bg-dark-lighter border-r border-gray-200 dark:border-gray-700">
-      <div className="flex items-center gap-2 mb-8 px-2">
-        <div className="text-xl font-bold text-primary">
-          Pixel Art
-        </div>
+    <aside className="w-64 min-h-screen bg-dark-lighter border-r border-gray-700 flex flex-col">
+      <div className="p-6">
+        <h1 className="text-xl font-bold">Pixel Art</h1>
+        <p className="text-sm text-gray-400">{user?.email}</p>
       </div>
 
-      <nav className="flex-1">
-        <ul className="space-y-2">
-          {links.map((link) => {
-            const Icon = link.icon;
-            return (
-              <li key={link.path}>
-                <Link
-                  to={link.path}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors
-                    ${isActive(link.path)
-                      ? 'bg-primary text-white'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark'
-                    }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="flex-1">{link.name}</span>
-                  {link.badge && link.badge > 0 && (
-                    <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-red-500 text-white text-xs">
-                      {link.badge}
-                    </span>
-                  )}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+      <nav className="mt-6 flex-1">
+        {menuItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-6 py-3 text-gray-300 hover:bg-dark hover:text-white transition-colors ${
+                isActive ? 'bg-dark text-white border-l-4 border-primary' : ''
+              }`
+            }
+          >
+            <div className="flex items-center gap-3 flex-1">
+              <item.icon className="w-5 h-5" />
+              <span>{item.name}</span>
+            </div>
+            {item.badge && (
+              <span className="bg-primary text-white text-xs font-semibold px-2 py-1 rounded-full">
+                {item.badge}
+              </span>
+            )}
+          </NavLink>
+        ))}
       </nav>
 
-      <button
-        onClick={handleSignOut}
-        className="flex items-center gap-2 px-4 py-2 mt-4 w-full rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark"
-      >
-        <LogOut className="w-5 h-5" />
-        Sair
-      </button>
-    </div>
+      <div className="p-4 border-t border-gray-700">
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-3 px-6 py-3 text-gray-300 hover:bg-dark hover:text-white transition-colors w-full rounded-lg"
+        >
+          <LogOut className="w-5 h-5" />
+          <span>Sair</span>
+        </button>
+      </div>
+    </aside>
   );
 }

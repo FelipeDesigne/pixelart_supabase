@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { collection, query, orderBy, onSnapshot, where, doc, updateDoc, Timestamp, addDoc, writeBatch, serverTimestamp, getDocs, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, where, addDoc, serverTimestamp, Timestamp, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { Send, Loader2, Trash2 } from 'lucide-react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNotification } from '../../contexts/NotificationContext';
+import { Send, Loader2, MessageCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface Message {
   id: string;
@@ -17,133 +18,62 @@ interface Message {
   chatId: string;
 }
 
-interface Chat {
+interface User {
   id: string;
-  userId: string;
-  userName: string;
-  lastMessage?: string;
-  lastMessageTimestamp?: Timestamp;
-  unreadCount?: number;
+  name: string;
+  email: string;
 }
 
 export default function Messages() {
-  const { user, isAdmin } = useAuth();
-  console.log('Messages Component - User:', user?.email);
-  console.log('Messages Component - Is Admin:', isAdmin);
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [chats, setChats] = useState<Chat[]>([]);
+  const { user } = useAuth();
+  const { unreadByUser } = useNotification();
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
   const [loading, setLoading] = useState(true);
   const [sendingMessage, setSendingMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
-  // Verificação de autenticação
-  useEffect(() => {
-    if (!user || !isAdmin) {
-      console.log('Not authenticated or not admin, redirecting to login');
-      console.log('User:', user?.email);
-      console.log('Is Admin:', isAdmin);
-      navigate('/login');
-      return;
-    }
-  }, [user, isAdmin, navigate]);
-
-  // Se não estiver autenticado, não renderiza nada
-  if (!user || !isAdmin) {
-    return null;
-  }
-
-  useEffect(() => {
-    console.log('=== Debug Authentication ===');
-    console.log('User:', user);
-    console.log('Email:', user?.email);
-    console.log('UID:', user?.uid);
-  }, [user]);
-
-  console.log('Debug - User:', user?.email);
-  console.log('Debug - User ID:', user?.uid);
-
-  // Scroll to bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Load chats
   useEffect(() => {
-    const messagesRef = collection(db, 'messages');
-    const q = query(
-      messagesRef,
-      where('isAdmin', '==', false),
-      orderBy('createdAt', 'desc')
-    );
+    if (!user) {
+      navigate('/login');
+      return;
+    }
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      // Group messages by chatId to create chat list
-      const chatMap = new Map<string, {
-        lastMessage: string;
-        lastMessageTimestamp: Timestamp;
-        unreadCount: number;
-        userName: string;
-        userId: string;
-      }>();
-
-      snapshot.docs.forEach(doc => {
-        const message = doc.data();
-        const chatId = message.chatId;
-        
-        if (!chatMap.has(chatId)) {
-          chatMap.set(chatId, {
-            lastMessage: message.text,
-            lastMessageTimestamp: message.createdAt,
-            unreadCount: !message.read ? 1 : 0,
-            userName: message.senderName,
-            userId: message.senderId
-          });
-        } else {
-          const chat = chatMap.get(chatId)!;
-          if (message.createdAt > chat.lastMessageTimestamp) {
-            chat.lastMessage = message.text;
-            chat.lastMessageTimestamp = message.createdAt;
-          }
-          if (!message.read) {
-            chat.unreadCount++;
-          }
-        }
-      });
-
-      const chatsList = Array.from(chatMap.entries()).map(([id, data]) => ({
-        id,
-        ...data
-      }));
-
-      setChats(chatsList);
-      setLoading(false);
-
-      // Auto-select chat from URL parameter
-      const chatId = searchParams.get('chat');
-      if (chatId && !selectedChat) {
-        const chat = chatsList.find(c => c.id === chatId);
-        if (chat) {
-          setSelectedChat(chat);
-        }
+    const fetchUsers = async () => {
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('role', '!=', 'admin'));
+        const querySnapshot = await getDocs(q);
+        const usersData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as User));
+        setUsers(usersData);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        toast.error('Erro ao carregar usuários');
+        setLoading(false);
       }
-    });
+    };
 
-    return () => unsubscribe();
-  }, [searchParams]);
+    fetchUsers();
+  }, [user, navigate]);
 
-  // Load messages for selected chat
   useEffect(() => {
-    if (!selectedChat) return;
+    if (!selectedUser) return;
 
     const messagesRef = collection(db, 'messages');
     const q = query(
       messagesRef,
-      where('chatId', '==', selectedChat.id),
+      where('chatId', '==', selectedUser.id),
       orderBy('createdAt', 'asc')
     );
 
@@ -151,124 +81,56 @@ export default function Messages() {
       const messagesList = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      })) as Message[];
-      
+      } as Message));
       setMessages(messagesList);
 
-      // Mark messages as read in batch
+      // Marcar mensagens não lidas como lidas
       const batch = writeBatch(db);
-      let hasUnread = false;
+      const unreadMessages = snapshot.docs.filter(
+        doc => !doc.data().read && !doc.data().isAdmin
+      );
 
-      snapshot.docs.forEach(doc => {
-        const data = doc.data();
-        if (!data.read && !data.isAdmin) {
-          hasUnread = true;
-          batch.update(doc.ref, { read: true });
-        }
+      unreadMessages.forEach(doc => {
+        batch.update(doc.ref, { read: true });
       });
 
-      if (hasUnread) {
-        try {
-          await batch.commit();
-        } catch (error) {
-          console.error('Error marking messages as read:', error);
-        }
+      if (unreadMessages.length > 0) {
+        await batch.commit();
       }
 
       scrollToBottom();
+    }, (error) => {
+      console.error('Error in messages listener:', error);
+      toast.error('Erro ao carregar mensagens');
     });
 
     return () => unsubscribe();
-  }, [selectedChat]);
+  }, [selectedUser]);
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    console.log('Debug - Sending message...');
-    console.log('Debug - Message:', newMessage);
-    console.log('Debug - Selected Chat:', selectedChat);
-    console.log('Debug - User:', user);
-    
-    // Validações mais detalhadas
-    if (!newMessage.trim()) {
-      toast.error('Digite uma mensagem');
-      return;
-    }
-    
-    if (!selectedChat) {
-      toast.error('Selecione um chat para enviar a mensagem');
-      return;
-    }
-    
-    if (!user) {
-      toast.error('Você precisa estar autenticado');
-      return;
-    }
+    if (!newMessage.trim() || !selectedUser || !user) return;
 
     setSendingMessage(true);
     try {
-      console.log('=== Debug Send Message ===');
-      console.log('Message Data:', {
-        chatId: selectedChat.id,
-        text: newMessage.trim(),
-        senderId: user.uid,
-        senderName: 'Admin',
-        isAdmin: true,
-        createdAt: serverTimestamp(),
-        read: false
-      });
-      
-      // Criando a referência da coleção messages
-      const messagesRef = collection(db, 'messages');
-      
       const messageData = {
-        chatId: selectedChat.id,
         text: newMessage.trim(),
         senderId: user.uid,
         senderName: 'Admin',
-        isAdmin: true,
+        chatId: selectedUser.id,
         createdAt: serverTimestamp(),
+        isAdmin: true,
         read: false
       };
 
-      // Adicionando a mensagem ao Firestore
-      const docRef = await addDoc(messagesRef, messageData);
-      console.log('Message added with ID:', docRef.id);
-      
-      // Limpa o campo de mensagem e rola para o final
+      await addDoc(collection(db, 'messages'), messageData);
       setNewMessage('');
       scrollToBottom();
-      
-      toast.success('Mensagem enviada com sucesso');
     } catch (error) {
-      console.error('Erro ao enviar mensagem:', error);
+      console.error('Error sending message:', error);
       toast.error('Erro ao enviar mensagem. Tente novamente.');
     } finally {
       setSendingMessage(false);
-    }
-  };
-
-  const handleDeleteChat = async () => {
-    if (!selectedChat) return;
-
-    if (window.confirm('Tem certeza que deseja excluir todo o histórico de mensagens com este usuário?')) {
-      try {
-        const messagesRef = collection(db, 'messages');
-        const q = query(messagesRef, where('chatId', '==', selectedChat.id));
-        const querySnapshot = await getDocs(q);
-        
-        const batch = writeBatch(db);
-        querySnapshot.docs.forEach((doc) => {
-          batch.delete(doc.ref);
-        });
-        
-        await batch.commit();
-        setSelectedChat(null);
-        toast.success('Chat excluído com sucesso');
-      } catch (error) {
-        console.error('Error deleting chat:', error);
-        toast.error('Erro ao excluir chat');
-      }
     }
   };
 
@@ -282,103 +144,113 @@ export default function Messages() {
 
   return (
     <div className="flex h-[calc(100vh-4rem)]">
-      {/* Chat list */}
-      <div className="w-80 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-lighter overflow-y-auto">
-        {chats.map((chat) => (
-          <button
-            key={chat.id}
-            onClick={() => setSelectedChat(chat)}
-            className={`w-full p-4 text-left border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-dark transition-colors
-              ${selectedChat?.id === chat.id ? 'bg-gray-50 dark:bg-dark' : ''}
-              ${chat.unreadCount ? 'bg-primary/10 dark:bg-primary/20' : ''}`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="font-medium">{chat.userName}</span>
-              {chat.unreadCount ? (
-                <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-primary text-white text-xs">
-                  {chat.unreadCount}
-                </span>
-              ) : null}
-            </div>
-            {chat.lastMessage && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 truncate mt-1">
-                {chat.lastMessage}
-              </p>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Chat messages */}
-      {selectedChat ? (
-        <div className="flex-1 flex flex-col bg-gray-50 dark:bg-dark">
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-lighter flex justify-between items-center">
-            <h2 className="font-medium">{selectedChat.userName}</h2>
-            <button
-              onClick={handleDeleteChat}
-              className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-              title="Excluir chat"
-            >
-              <Trash2 className="w-5 h-5" />
-            </button>
-          </div>
-
-          <div 
-            ref={chatContainerRef}
-            className="flex-1 overflow-y-auto p-4 space-y-4"
-          >
-            {messages.map((message) => (
+      {/* Users list */}
+      <div className="w-1/4 bg-white dark:bg-dark-lighter border-r border-gray-200 dark:border-gray-700 p-4 overflow-y-auto">
+        <h2 className="font-medium mb-4">Usuários</h2>
+        <div className="space-y-2">
+          {users.map(user => {
+            const unreadCount = unreadByUser.find(u => u.chatId === user.id)?.count || 0;
+            
+            return (
               <div
-                key={message.id}
-                className={`flex ${message.isAdmin ? 'justify-end' : 'justify-start'}`}
+                key={user.id}
+                className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                  selectedUser?.id === user.id
+                    ? 'bg-primary/20 text-primary'
+                    : 'hover:bg-gray-50 dark:hover:bg-dark/50'
+                }`}
+                onClick={() => setSelectedUser(user)}
               >
-                <div
-                  className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                    message.isAdmin
-                      ? 'bg-primary text-white'
-                      : 'bg-white dark:bg-dark-lighter'
-                  }`}
-                >
-                  <p>{message.text}</p>
-                  <span className="text-xs opacity-70 mt-1 block">
-                    {message.createdAt?.toDate().toLocaleTimeString()}
-                  </span>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium">{user.name}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{user.email}</div>
+                  </div>
+                  {unreadCount > 0 && (
+                    <div className="flex items-center gap-1 bg-red-500 text-white px-2 py-1 rounded-full text-xs">
+                      <MessageCircle size={12} />
+                      {unreadCount}
+                    </div>
+                  )}
                 </div>
               </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
+            );
+          })}
+        </div>
+      </div>
 
-          <form onSubmit={sendMessage} className="p-4 bg-white dark:bg-dark-lighter border-t border-gray-200 dark:border-gray-700">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Digite sua mensagem..."
-                className="flex-1 bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <button
-                type="submit"
-                disabled={!newMessage.trim() || sendingMessage}
-                className="bg-primary text-white rounded-lg px-4 py-2 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {sendingMessage ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Send className="w-5 h-5" />
-                )}
-              </button>
+      {/* Messages area */}
+      <div className="flex-1 flex flex-col">
+        {selectedUser ? (
+          <>
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-lighter">
+              <h3 className="font-medium">{selectedUser.name}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{selectedUser.email}</p>
             </div>
-          </form>
-        </div>
-      ) : (
-        <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-dark">
-          <p className="text-gray-500 dark:text-gray-400">
-            Selecione um chat para começar a conversar
-          </p>
-        </div>
-      )}
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-dark">
+              {messages.length === 0 ? (
+                <div className="text-center text-gray-500 dark:text-gray-400">
+                  Nenhuma mensagem ainda. Comece uma conversa!
+                </div>
+              ) : (
+                messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${message.isAdmin ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                        message.isAdmin
+                          ? 'bg-primary text-dark'
+                          : 'bg-white dark:bg-dark-lighter'
+                      }`}
+                    >
+                      <p>{message.text}</p>
+                      <div className="flex items-center gap-2 text-xs opacity-70 mt-1">
+                        <span>{message.createdAt?.toDate().toLocaleTimeString()}</span>
+                        {!message.isAdmin && (
+                          <span className={message.read ? 'text-green-500' : 'text-gray-400'}>
+                            {message.read ? '• Lida' : '• Não lida'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <form onSubmit={sendMessage} className="p-4 bg-white dark:bg-dark-lighter border-t border-gray-200 dark:border-gray-700">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Digite sua mensagem..."
+                  className="flex-1 bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <button
+                  type="submit"
+                  disabled={sendingMessage}
+                  className="bg-primary text-dark px-4 py-2 rounded-lg hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary flex items-center gap-2"
+                >
+                  {sendingMessage ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Send size={20} />
+                  )}
+                </button>
+              </div>
+            </form>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
+            Selecione um usuário para iniciar uma conversa
+          </div>
+        )}
+      </div>
     </div>
   );
 }

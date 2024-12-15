@@ -24,6 +24,18 @@
   .nav-link {
     @apply text-white hover:text-[#A4FF43] transition-colors duration-300;
   }
+
+  .btn-primary {
+    @apply bg-primary hover:bg-secondary text-dark font-bold py-2 px-4 rounded transition duration-200;
+  }
+
+  .btn-secondary {
+    @apply bg-dark-lighter hover:bg-dark-accent text-white font-bold py-2 px-4 rounded transition duration-200;
+  }
+
+  .input-primary {
+    @apply bg-dark-lighter text-white border border-gray-600 rounded py-2 px-4 focus:outline-none focus:border-primary;
+  }
 }
 
 .gradient-bg {

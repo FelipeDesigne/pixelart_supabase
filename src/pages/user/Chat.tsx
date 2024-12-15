@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { collection, query, orderBy, onSnapshot, where, addDoc, serverTimestamp, Timestamp, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, where, addDoc, serverTimestamp, Timestamp, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotification } from '../../contexts/NotificationContext';
 import { Send, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -18,6 +19,7 @@ interface Message {
 
 export default function Chat() {
   const { user } = useAuth();
+  const { unreadAdminMessages } = useNotification();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -48,67 +50,45 @@ export default function Chat() {
         const snapshot = await getDocs(q);
         console.log('Found', snapshot.size, 'unread messages to mark as read');
 
-        const batch = snapshot.docs.map(async (doc) => {
-          console.log('Marking message as read:', doc.id);
-          await updateDoc(doc.ref, { read: true });
-        });
-
-        await Promise.all(batch);
-        console.log('All messages marked as read');
+        if (snapshot.size > 0) {
+          const batch = writeBatch(db);
+          snapshot.docs.forEach((doc) => {
+            batch.update(doc.ref, { read: true });
+          });
+          await batch.commit();
+          console.log('Messages marked as read');
+        }
       } catch (error) {
         console.error('Error marking messages as read:', error);
       }
     };
 
     markMessagesAsRead();
-  }, [user]);
+  }, [user, messages]);
 
+  // Carregar mensagens
   useEffect(() => {
-    console.log('Chat useEffect triggered, user:', user);
-    
-    if (!user) {
-      console.log('No user, returning');
-      return;
-    }
+    if (!user) return;
 
-    console.log('Setting up Firestore query for chatId:', user.uid);
     const messagesRef = collection(db, 'messages');
     const q = query(
       messagesRef,
       where('chatId', '==', user.uid),
-      orderBy('createdAt', 'asc')
+      orderBy('createdAt', 'desc')
     );
 
-    try {
-      console.log('Attempting to set up onSnapshot listener');
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        console.log('Received snapshot with', snapshot.docs.length, 'messages');
-        const messagesList = snapshot.docs.map(doc => {
-          const data = doc.data();
-          console.log('Message data:', data);
-          return {
-            id: doc.id,
-            ...data
-          };
-        }) as Message[];
-        
-        console.log('Setting messages:', messagesList);
-        setMessages(messagesList);
-        setLoading(false);
-        scrollToBottom();
-      }, (error) => {
-        console.error('Error in onSnapshot:', error);
-        setLoading(false);
-      });
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const messagesData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Message[];
 
-      return () => {
-        console.log('Cleaning up listener');
-        unsubscribe();
-      };
-    } catch (error) {
-      console.error('Error setting up listener:', error);
+      setMessages(messagesData.reverse());
       setLoading(false);
-    }
+      setTimeout(scrollToBottom, 100);
+    });
+
+    return () => unsubscribe();
   }, [user]);
 
   const sendMessage = async (e: React.FormEvent) => {
@@ -155,8 +135,13 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-lighter">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-lighter flex justify-between items-center">
         <h2 className="font-medium">Chat com Administrador</h2>
+        {unreadAdminMessages > 0 && (
+          <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+            {unreadAdminMessages} {unreadAdminMessages === 1 ? 'nova mensagem' : 'novas mensagens'}
+          </span>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-dark">
@@ -174,7 +159,7 @@ export default function Chat() {
                 className={`max-w-[70%] rounded-lg px-4 py-2 ${
                   message.isAdmin
                     ? 'bg-white dark:bg-dark-lighter'
-                    : 'bg-primary text-white'
+                    : 'bg-primary text-dark'
                 }`}
               >
                 <p>{message.text}</p>
@@ -199,13 +184,13 @@ export default function Chat() {
           />
           <button
             type="submit"
-            disabled={!newMessage.trim() || sendingMessage}
-            className="bg-primary text-white rounded-lg px-4 py-2 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={sendingMessage}
+            className="bg-primary text-dark px-4 py-2 rounded-lg hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary flex items-center gap-2"
           >
             {sendingMessage ? (
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
-              <Send className="w-5 h-5" />
+              <Send size={20} />
             )}
           </button>
         </div>

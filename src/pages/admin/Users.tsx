@@ -17,11 +17,13 @@ import {
   EmailAuthProvider,
   getAuth,
   signInWithEmailAndPassword,
-  fetchSignInMethodsForEmail
+  fetchSignInMethodsForEmail,
+  signOut
 } from 'firebase/auth';
 import { auth, db } from '../../lib/firebase';
 import { toast } from 'react-hot-toast';
-import { Loader2, Search, UserPlus, MoreVertical, Ban, Key, Trash2 } from 'lucide-react';
+import { Loader2, Search, UserPlus, MoreVertical, Ban, Key, Trash2, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface NewUser {
   name: string;
@@ -62,6 +64,8 @@ export default function Users() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -259,6 +263,17 @@ export default function Users() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate('/');
+      toast.success('Logout realizado com sucesso');
+    } catch (error) {
+      console.error('Error logging out:', error);
+      toast.error('Erro ao fazer logout');
+    }
+  };
+
   const toggleDropdown = (userId: string) => {
     setActiveDropdown(activeDropdown === userId ? null : userId);
   };
@@ -287,13 +302,22 @@ export default function Users() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Usuários</h1>
-        <button 
-          className="btn-primary flex items-center gap-2"
-          onClick={() => setShowAddModal(true)}
-        >
-          <UserPlus className="w-4 h-4" />
-          Adicionar Usuário
-        </button>
+        <div className="flex items-center gap-4">
+          <button 
+            className="btn-primary flex items-center gap-2"
+            onClick={() => setShowAddModal(true)}
+          >
+            <UserPlus className="w-4 h-4" />
+            Adicionar Usuário
+          </button>
+          <button 
+            onClick={handleLogout}
+            className="btn-secondary flex items-center gap-2"
+          >
+            <LogOut className="w-4 h-4" />
+            Sair
+          </button>
+        </div>
       </div>
 
       {/* Barra de Pesquisa */}

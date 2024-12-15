@@ -71,11 +71,6 @@ export default function NewRequest() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!selectedFile) {
-      toast.error('Por favor, selecione uma imagem');
-      return;
-    }
 
     if (!formData.description.trim()) {
       toast.error('Por favor, adicione uma descrição');
@@ -85,8 +80,11 @@ export default function NewRequest() {
     setIsSubmitting(true);
 
     try {
-      // Upload da imagem para o Supabase
-      const imageUrl = await uploadImage(selectedFile, user!.uid);
+      let imageUrl = null;
+      if (selectedFile) {
+        // Upload da imagem para o Supabase apenas se uma imagem foi selecionada
+        imageUrl = await uploadImage(selectedFile, user!.uid);
+      }
 
       // Criar o pedido no Firestore
       const docRef = await addDoc(collection(db, 'requests'), {

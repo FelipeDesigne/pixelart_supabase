@@ -1,24 +1,24 @@
 import { Outlet } from 'react-router-dom';
-import AdminSidebar from '../../components/AdminSidebar';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import UserSidebar from '../../components/UserSidebar';
 
-export default function AdminLayout() {
-  const { isAdmin } = useAuth();
+export default function UserLayout() {
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isAdmin) {
-      navigate('/');
+    if (!user) {
+      navigate('/login');
     }
-  }, [isAdmin, navigate]);
+  }, [user, navigate]);
 
-  if (!isAdmin) return null;
+  if (!user) return null;
 
   return (
     <div className="flex min-h-screen">
-      <AdminSidebar />
+      <UserSidebar />
       <main className="flex-1 p-6">
         <Outlet />
       </main>

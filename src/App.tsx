@@ -4,13 +4,14 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
-import AdminLayout from './layouts/AdminLayout';
-import UserLayout from './layouts/UserLayout';
+import AdminLayout from './pages/admin/Layout';
+import UserLayout from './pages/user/Layout';
 import AdminDashboard from './pages/admin/Dashboard';
 import Users from './pages/admin/Users';
 import Requests from './pages/admin/Requests';
 import Messages from './pages/admin/Messages';
 import AdminSettings from './pages/admin/Settings';
+import UploadArt from './pages/admin/UploadArt';
 import Overview from './pages/user/Overview';
 import Settings from './pages/user/Settings';
 import Profile from './pages/user/Profile';
@@ -46,6 +47,7 @@ function AppRoutes() {
           <Route path="requests" element={<Requests />} />
           <Route path="messages" element={<Messages />} />
           <Route path="settings" element={<AdminSettings />} />
+          <Route path="upload-art" element={<UploadArt />} />
         </Route>
 
         {/* Rotas do usuário */}
