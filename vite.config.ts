@@ -11,5 +11,5 @@ export default defineConfig({
   server: {
     port: 5174 // Porta diferente da padrão (5173)
   },
-  base: '/PixelArt/',
+  base: '/'
 });
