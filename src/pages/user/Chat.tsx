@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { collection, query, orderBy, onSnapshot, where, addDoc, serverTimestamp, Timestamp, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, where, addDoc, serverTimestamp, Timestamp, getDocs, writeBatch, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface Message {
@@ -122,6 +122,28 @@ export default function Chat() {
     }
   };
 
+  const deleteChat = async () => {
+    if (!user || !window.confirm('Tem certeza que deseja excluir todas as mensagens?')) return;
+
+    try {
+      const messagesRef = collection(db, 'messages');
+      const q = query(messagesRef, where('chatId', '==', user.uid));
+      const snapshot = await getDocs(q);
+
+      const batch = writeBatch(db);
+      snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+
+      await batch.commit();
+      toast.success('Chat excluído com sucesso!');
+      setMessages([]);
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+      toast.error('Erro ao excluir o chat. Tente novamente.');
+    }
+  };
+
   console.log('Current loading state:', loading);
   console.log('Current messages:', messages);
 
@@ -137,11 +159,20 @@ export default function Chat() {
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-lighter flex justify-between items-center">
         <h2 className="font-medium">Chat com Administrador</h2>
-        {unreadAdminMessages > 0 && (
-          <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-            {unreadAdminMessages} {unreadAdminMessages === 1 ? 'nova mensagem' : 'novas mensagens'}
-          </span>
-        )}
+        <div className="flex items-center gap-4">
+          {unreadAdminMessages > 0 && (
+            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+              {unreadAdminMessages} {unreadAdminMessages === 1 ? 'nova mensagem' : 'novas mensagens'}
+            </span>
+          )}
+          <button
+            onClick={deleteChat}
+            className="text-gray-500 hover:text-red-500 focus:outline-none"
+            title="Excluir chat"
+          >
+            <Trash2 size={20} />
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-dark">
