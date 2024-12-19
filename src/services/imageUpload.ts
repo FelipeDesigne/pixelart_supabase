@@ -44,7 +44,7 @@ export async function uploadImage(file: File, userId: string) {
   }
 }
 
-export async function uploadFinishedArt(file: File, userId: string, title: string, description: string) {
+export async function uploadFinishedArt(file: File, userId: string, title: string, description: string, userName: string) {
   try {
     // Garantir que temos um token válido
     const token = await auth.currentUser?.getIdToken();
@@ -53,11 +53,27 @@ export async function uploadFinishedArt(file: File, userId: string, title: strin
     }
 
     // Preparar o nome do arquivo
-    const fileExt = file.name.split('.').pop();
+    const fileExt = file.name.split('.').pop()?.toLowerCase();
     const sanitizedTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const fileName = `${sanitizedTitle}-${Date.now()}.${fileExt}`;
-    const monthYear = getMonthYearPath();
-    const filePath = `users/${userId}/artworks/${monthYear}/${fileName}`;
+    const fileName = `${sanitizedTitle}.${fileExt}`;
+    
+    // Criar caminho do arquivo incluindo ano e mês
+    const now = new Date();
+    const year = now.getFullYear().toString();
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    const filePath = `users/${userId}/artworks/${userName}/${year}/${month}/${fileName}`;
+
+    console.log('Fazendo upload:', {
+      title,
+      sanitizedTitle,
+      fileName,
+      filePath,
+      fileType: file.type,
+      size: file.size,
+      year,
+      month,
+      userName
+    });
 
     // Upload do arquivo
     const { data, error } = await supabase.storage
@@ -65,7 +81,16 @@ export async function uploadFinishedArt(file: File, userId: string, title: strin
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: true,
-        contentType: file.type
+        contentType: file.type,
+        duplex: 'half',
+        metadata: {
+          title,
+          description,
+          userId,
+          uploadedAt: new Date().toISOString(),
+          fileType: file.type,
+          fileSize: file.size
+        }
       });
 
     if (error) {
@@ -88,7 +113,7 @@ export async function uploadFinishedArt(file: File, userId: string, title: strin
       uploadedAt: new Date().toISOString(),
       fileType: file.type,
       fileSize: file.size,
-      monthYear // Adicionando informação do mês/ano para facilitar filtros
+      originalTitle: title
     };
 
     return {
@@ -118,51 +143,120 @@ export async function deleteImage(path: string) {
 
 export async function listUserArtworks(userId: string) {
   try {
-    // Primeiro, listar todos os meses/anos disponíveis
-    const { data: folders, error: foldersError } = await supabase.storage
+    console.log('Buscando artes para usuário:', userId);
+
+    // Listar todos os arquivos na pasta artworks
+    const { data: files, error } = await supabase.storage
       .from('PixelArt')
       .list(`users/${userId}/artworks`);
 
-    if (foldersError) throw foldersError;
+    if (error) {
+      console.error('Erro ao listar arquivos:', error);
+      throw error;
+    }
 
-    // Para cada mês/ano, listar os arquivos
-    const allArtworks = await Promise.all(
-      folders.map(async (folder) => {
-        const { data: files, error: filesError } = await supabase.storage
+    console.log('Arquivos encontrados:', files);
+
+    if (!files) return [];
+
+    // Para cada arquivo, gerar URL pública e determinar o tipo
+    const artworks = await Promise.all(
+      files.map(async (file) => {
+        console.log('Processando arquivo:', file);
+
+        const filePath = `users/${userId}/artworks/${file.name}`;
+        const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
+        const isVideo = ['mp4', 'webm', 'mov', 'avi'].includes(fileExt);
+        
+        const { data: { publicUrl } } = supabase.storage
           .from('PixelArt')
-          .list(`users/${userId}/artworks/${folder.name}`);
+          .getPublicUrl(filePath);
 
-        if (filesError) throw filesError;
+        // Extrair título do nome do arquivo
+        const title = file.name
+          .split('.')
+          .slice(0, -1)
+          .join('.')
+          .replace(/^\d+-/, '') // remove timestamp do início
+          .replace(/-/g, ' ')
+          .replace(/\b\w/g, l => l.toUpperCase());
 
-        // Para cada arquivo, gerar URL pública
-        return Promise.all(files.map(async (file) => {
-          const filePath = `users/${userId}/artworks/${folder.name}/${file.name}`;
-          const { data: { publicUrl } } = supabase.storage
-            .from('PixelArt')
-            .getPublicUrl(filePath);
+        console.log('Arte processada:', {
+          name: file.name,
+          title,
+          type: isVideo ? 'video' : 'image',
+          url: publicUrl
+        });
 
-          return {
-            ...file,
-            monthYear: folder.name,
-            publicUrl,
-            filePath
-          };
-        }));
+        return {
+          id: file.name,
+          title,
+          fileUrl: publicUrl,
+          createdAt: file.created_at || new Date().toISOString(),
+          type: isVideo ? 'video' : 'image'
+        };
       })
     );
 
-    // Flatten o array de arrays e ordenar por data (mais recente primeiro)
-    const flattenedArtworks = allArtworks
-      .flat()
-      .sort((a, b) => {
-        const dateA = new Date(a.created_at || 0);
-        const dateB = new Date(b.created_at || 0);
-        return dateB.getTime() - dateA.getTime();
-      });
+    // Ordenar por data de criação (mais recente primeiro)
+    const sortedArtworks = artworks.sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return dateB.getTime() - dateA.getTime();
+    });
 
-    return flattenedArtworks;
+    console.log('Artes ordenadas:', sortedArtworks);
+
+    return sortedArtworks;
   } catch (error) {
     console.error('Erro ao listar artworks:', error);
+    throw error;
+  }
+}
+
+export async function downloadAndDeleteArt(filePath: string, fileName: string) {
+  try {
+    // Download do arquivo
+    const { data, error: downloadError } = await supabase.storage
+      .from('PixelArt')
+      .download(filePath);
+
+    if (downloadError) {
+      console.error('Erro ao baixar arquivo:', downloadError);
+      throw downloadError;
+    }
+
+    if (!data) {
+      throw new Error('Arquivo não encontrado');
+    }
+
+    // Criar URL para download
+    const url = URL.createObjectURL(data);
+    
+    // Criar elemento <a> para download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName; // Nome do arquivo para download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Limpar URL
+    URL.revokeObjectURL(url);
+
+    // Deletar arquivo do Supabase
+    const { error: deleteError } = await supabase.storage
+      .from('PixelArt')
+      .remove([filePath]);
+
+    if (deleteError) {
+      console.error('Erro ao deletar arquivo:', deleteError);
+      throw deleteError;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Erro ao fazer download e deletar:', error);
     throw error;
   }
 }

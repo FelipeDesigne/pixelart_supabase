@@ -12,6 +12,7 @@ import Requests from './pages/admin/Requests';
 import Messages from './pages/admin/Messages';
 import AdminSettings from './pages/admin/Settings';
 import UploadArt from './pages/admin/UploadArt';
+import UserArts from './pages/admin/UserArts';
 import Overview from './pages/user/Overview';
 import Settings from './pages/user/Settings';
 import Profile from './pages/user/Profile';
@@ -44,6 +45,7 @@ function AppRoutes() {
         >
           <Route index element={<AdminDashboard />} />
           <Route path="users" element={<Users />} />
+          <Route path="user-arts/:userId" element={<UserArts />} />
           <Route path="requests" element={<Requests />} />
           <Route path="messages" element={<Messages />} />
           <Route path="settings" element={<AdminSettings />} />

@@ -84,7 +84,8 @@ export default function UploadArt() {
           file,
           selectedUser,
           title,
-          description || ''
+          description || '',
+          users.find(u => u.id === selectedUser)?.name
         );
       }
 

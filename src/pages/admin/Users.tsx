@@ -22,7 +22,7 @@ import {
 } from 'firebase/auth';
 import { auth, db } from '../../lib/firebase';
 import { toast } from 'react-hot-toast';
-import { Loader2, Search, UserPlus, MoreVertical, Ban, Key, Trash2, LogOut } from 'lucide-react';
+import { Loader2, Search, UserPlus, MoreVertical, Ban, Key, Trash2, LogOut, Image } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface NewUser {
@@ -424,6 +424,13 @@ export default function Users() {
                         title="Alterar Senha"
                       >
                         <Key className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => navigate(`/admin/user-arts/${user.id}`)}
+                        className="text-purple-500 hover:text-purple-700 bg-purple-500/10 hover:bg-purple-500/20 transition-colors rounded-lg p-2"
+                        title="Ver Artes do Usuário"
+                      >
+                        <Image className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => handleDeleteUser(user.id)}
