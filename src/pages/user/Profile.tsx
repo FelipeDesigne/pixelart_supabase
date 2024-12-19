@@ -25,7 +25,7 @@ export default function Profile() {
       </div>
 
       <div className="bg-dark p-6 rounded-lg">
-        <ArtGallery userId={user.uid} />
+        <ArtGallery userId={user.uid} userName={user.displayName || user.email || ''} />
       </div>
     </div>
   );

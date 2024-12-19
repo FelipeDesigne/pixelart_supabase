@@ -49,92 +49,39 @@ export default function UserArts() {
       try {
         setLoading(true);
 
-        // Mover arquivos da pasta 2080 para 2024
-        const { data: oldFiles, error: oldError } = await supabase.storage
-          .from('PixelArt')
-          .list(`users/${userId}/artworks/2080`);
-
-        if (oldFiles && !oldError) {
-          for (const file of oldFiles) {
-            const { data } = await supabase.storage
-              .from('PixelArt')
-              .copy(
-                `users/${userId}/artworks/2080/${file.name}`,
-                `users/${userId}/artworks/2024/${file.name}`
-              );
-          }
-        }
-
         // Buscar informações do usuário
         if (userId) {
           const userRef = doc(db, 'users', userId);
           const userSnap = await getDoc(userRef);
           
           if (userSnap.exists()) {
-            setUserName(userSnap.data().name || userSnap.data().email);
-          }
-        }
+            const name = userSnap.data().name || userSnap.data().email;
+            setUserName(name);
 
-        // Buscar anos
-        const { data: years, error: yearsError } = await supabase.storage
-          .from('PixelArt')
-          .list(`users/${userId}/artworks`);
-
-        console.log('Anos encontrados:', {
-          path: `users/${userId}/artworks`,
-          years,
-          error: yearsError
-        });
-
-        if (yearsError) throw yearsError;
-
-        const allArtworks: Art[] = [];
-
-        // Processar cada ano
-        for (const year of years || []) {
-          // Buscar meses
-          const { data: months, error: monthsError } = await supabase.storage
-            .from('PixelArt')
-            .list(`users/${userId}/artworks/${year.name}`);
-
-          console.log(`Meses encontrados para ${year.name}:`, {
-            path: `users/${userId}/artworks/${year.name}`,
-            months,
-            error: monthsError
-          });
-
-          if (monthsError) {
-            console.error(`Erro ao buscar meses do ano ${year.name}:`, monthsError);
-            continue;
-          }
-
-          // Processar cada mês
-          for (const month of months || []) {
-            // Buscar arquivos
+            // Buscar arquivos usando o nome do usuário no caminho
             const { data: files, error: filesError } = await supabase.storage
               .from('PixelArt')
-              .list(`users/${userId}/artworks/${year.name}/${month.name}`);
+              .list(`users/${userId}/artworks/${name}/2024/12`);
 
-            console.log(`Arquivos encontrados em ${month.name}/${year.name}:`, {
-              path: `users/${userId}/artworks/${year.name}/${month.name}`,
+            console.log('Arquivos encontrados:', {
+              path: `users/${userId}/artworks/${name}/2024/12`,
               files,
               error: filesError
             });
 
-            if (filesError) {
-              console.error(`Erro ao buscar arquivos de ${month.name}/${year.name}:`, filesError);
-              continue;
-            }
+            if (filesError) throw filesError;
+
+            const allArtworks: Art[] = [];
 
             // Processar arquivos
             for (const file of files || []) {
               const { data: { publicUrl } } = supabase.storage
                 .from('PixelArt')
-                .getPublicUrl(`users/${userId}/artworks/${year.name}/${month.name}/${file.name}`);
+                .getPublicUrl(`users/${userId}/artworks/${name}/2024/12/${file.name}`);
 
               console.log('Processando arquivo:', {
                 name: file.name,
-                path: `users/${userId}/artworks/${year.name}/${month.name}/${file.name}`,
+                path: `users/${userId}/artworks/${name}/2024/12/${file.name}`,
                 metadata: file.metadata,
                 publicUrl
               });
@@ -147,21 +94,21 @@ export default function UserArts() {
                 fileUrl: publicUrl,
                 createdAt: file.created_at || new Date().toISOString(),
                 type: isVideo ? 'video' : 'image',
-                filePath: `users/${userId}/artworks/${year.name}/${month.name}/${file.name}`
+                filePath: `users/${userId}/artworks/${name}/2024/12/${file.name}`
               });
             }
+
+            console.log('Total de artes encontradas:', allArtworks.length);
+
+            // Ordenar por data de criação
+            allArtworks.sort((a, b) => 
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+
+            console.log('Admin - Total de artes:', allArtworks.length);
+            setArts(allArtworks);
           }
         }
-
-        console.log('Total de artes encontradas:', allArtworks.length);
-
-        // Ordenar por data de criação
-        allArtworks.sort((a, b) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-
-        console.log('Admin - Total de artes:', allArtworks.length);
-        setArts(allArtworks);
       } catch (error) {
         console.error('Error fetching arts:', error);
         toast.error('Erro ao carregar artes');
@@ -171,7 +118,7 @@ export default function UserArts() {
     };
 
     fetchUserAndArts();
-  }, [userId, userName]);
+  }, [userId]);
 
   if (loading) {
     return (

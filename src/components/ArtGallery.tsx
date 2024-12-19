@@ -33,91 +33,53 @@ export default function ArtGallery({ userId, userName }: ArtGalleryProps) {
 
   useEffect(() => {
     fetchArtworks();
-  }, []);
+  }, [userId, userName]);
 
   const fetchArtworks = async () => {
     try {
       setLoading(true);
 
-      // Buscar anos
-      const { data: years, error: yearsError } = await supabase.storage
+      // Buscar arquivos diretamente na pasta correta
+      const { data: files, error: filesError } = await supabase.storage
         .from('PixelArt')
-        .list(`users/${userId}/artworks`);
+        .list(`users/${userId}/artworks/${userName}/2024/12`);
 
-      console.log('Anos encontrados:', {
-        path: `users/${userId}/artworks`,
-        years,
-        error: yearsError
+      console.log('Arquivos encontrados:', {
+        path: `users/${userId}/artworks/${userName}/2024/12`,
+        files,
+        error: filesError
       });
 
-      if (yearsError) throw yearsError;
+      if (filesError) throw filesError;
 
       const artworks: ArtWork[] = [];
 
-      // Processar cada ano
-      for (const year of years || []) {
-        // Buscar meses
-        const { data: months, error: monthsError } = await supabase.storage
+      // Processar arquivos
+      for (const file of files || []) {
+        const { data: { publicUrl } } = supabase.storage
           .from('PixelArt')
-          .list(`users/${userId}/artworks/${year.name}`);
+          .getPublicUrl(`users/${userId}/artworks/${userName}/2024/12/${file.name}`);
 
-        console.log(`Meses encontrados para ${year.name}:`, {
-          path: `users/${userId}/artworks/${year.name}`,
-          months,
-          error: monthsError
+        console.log('Processando arquivo:', {
+          name: file.name,
+          path: `users/${userId}/artworks/${userName}/2024/12/${file.name}`,
+          metadata: file.metadata,
+          publicUrl
         });
 
-        if (monthsError) {
-          console.error(`Erro ao buscar meses do ano ${year.name}:`, monthsError);
-          continue;
-        }
+        const isVideo = file.metadata?.mimetype?.startsWith('video/');
+        const monthYear = 'dezembro de 2024';  
 
-        // Processar cada mês
-        for (const month of months || []) {
-          // Buscar arquivos
-          const { data: files, error: filesError } = await supabase.storage
-            .from('PixelArt')
-            .list(`users/${userId}/artworks/${year.name}/${month.name}`);
-
-          console.log(`Arquivos encontrados em ${month.name}/${year.name}:`, {
-            path: `users/${userId}/artworks/${year.name}/${month.name}`,
-            files,
-            error: filesError
-          });
-
-          if (filesError) {
-            console.error(`Erro ao buscar arquivos de ${month.name}/${year.name}:`, filesError);
-            continue;
-          }
-
-          // Processar arquivos
-          for (const file of files || []) {
-            const { data: { publicUrl } } = supabase.storage
-              .from('PixelArt')
-              .getPublicUrl(`users/${userId}/artworks/${year.name}/${month.name}/${file.name}`);
-
-            console.log('Processando arquivo:', {
-              name: file.name,
-              path: `users/${userId}/artworks/${year.name}/${month.name}/${file.name}`,
-              metadata: file.metadata,
-              publicUrl
-            });
-
-            const isVideo = file.metadata?.mimetype?.startsWith('video/');
-            const monthYear = 'dezembro de 2024';  
-
-            artworks.push({
-              id: file.id,
-              title: file.name.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-              description: '',
-              fileUrl: publicUrl,
-              type: isVideo ? 'video' : 'image',
-              createdAt: file.created_at || new Date().toISOString(),
-              monthYear,
-              filePath: `users/${userId}/artworks/${year.name}/${month.name}/${file.name}`
-            });
-          }
-        }
+        artworks.push({
+          id: file.id || file.name,
+          title: file.name.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+          description: '',
+          fileUrl: publicUrl,
+          type: isVideo ? 'video' : 'image',
+          createdAt: file.created_at || new Date().toISOString(),
+          monthYear,
+          filePath: `users/${userId}/artworks/${userName}/2024/12/${file.name}`
+        });
       }
 
       console.log('Total de artes encontradas:', artworks.length);
