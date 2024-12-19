@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
-import { Loader2, Palette, Lock, MessageCircle } from 'lucide-react';
+import { Loader2, Palette, Lock, MessageCircle, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
@@ -28,7 +29,7 @@ export default function Login() {
   };
 
   const handleWhatsAppClick = () => {
-    // Add your WhatsApp click handler logic here
+    window.open('https://wa.me/5514981181568', '_blank');
   };
 
   return (
@@ -65,13 +66,19 @@ export default function Login() {
                 <input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="block w-full px-3 py-2 bg-[#0E1A23] border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-[#A4FF43] focus:border-[#A4FF43] text-white"
                 />
-                <Lock className="h-5 w-5 text-gray-400 absolute right-3 top-2.5" />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-300 focus:outline-none"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
             </div>
           </div>

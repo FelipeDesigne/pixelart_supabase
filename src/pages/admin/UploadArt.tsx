@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
@@ -16,13 +16,14 @@ interface User {
 export default function UploadArt() {
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
+  const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
@@ -60,37 +61,41 @@ export default function UploadArt() {
     setLoading(true);
 
     try {
-      if (!selectedUser || !title || !file) {
+      if (!selectedUser || !title || files.length === 0) {
         throw new Error('Por favor, preencha todos os campos obrigatórios');
       }
 
-      // Validar tamanho do arquivo (máximo 50MB)
+      // Validar tamanho e tipo de cada arquivo
       const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB em bytes
-      if (file.size > MAX_FILE_SIZE) {
-        throw new Error('O arquivo é muito grande. O tamanho máximo é 50MB.');
-      }
-
-      // Validar tipo do arquivo
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
-      if (!allowedTypes.includes(file.type)) {
-        throw new Error('Tipo de arquivo não suportado. Use imagens (JPG, PNG, GIF, WebP) ou vídeos (MP4, WebM).');
+      
+      for (const file of files) {
+        if (file.size > MAX_FILE_SIZE) {
+          throw new Error(`O arquivo "${file.name}" é muito grande. O tamanho máximo é 50MB.`);
+        }
+        if (!allowedTypes.includes(file.type)) {
+          throw new Error(`O arquivo "${file.name}" não é suportado. Use imagens (JPG, PNG, GIF, WebP) ou vídeos (MP4, WebM).`);
+        }
       }
 
-      const result = await uploadFinishedArt(
-        file,
-        selectedUser,
-        title,
-        description || ''
-      );
+      // Upload de cada arquivo
+      for (const file of files) {
+        await uploadFinishedArt(
+          file,
+          selectedUser,
+          title,
+          description || ''
+        );
+      }
 
-      console.log('Upload successful:', result);
-      toast.success('Arte enviada com sucesso!');
+      toast.success(`${files.length} ${files.length === 1 ? 'arte enviada' : 'artes enviadas'} com sucesso!`);
       
       // Limpar formulário
       setSelectedUser('');
       setTitle('');
       setDescription('');
-      setFile(null);
+      setFiles([]);
+      formRef.current?.reset(); // Reseta o formulário, incluindo o input de arquivo
     } catch (error: any) {
       console.error('Error uploading art:', error);
       let errorMessage = 'Erro ao enviar arte. ';
@@ -115,7 +120,7 @@ export default function UploadArt() {
     <div className="max-w-2xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Upload de Arte Finalizada</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
         {/* Seleção de usuário */}
         <div>
           <label className="block text-sm font-medium mb-2">
@@ -191,14 +196,20 @@ export default function UploadArt() {
         {/* Upload de arquivo */}
         <div>
           <label className="block text-sm font-medium mb-2">
-            Arquivo
+            Arquivos
           </label>
           <input
             type="file"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            onChange={(e) => setFiles(Array.from(e.target.files || []))}
             accept="image/*,video/*"
+            multiple
             className="w-full bg-dark-lighter p-3 rounded-lg"
           />
+          {files.length > 0 && (
+            <p className="mt-2 text-sm text-gray-400">
+              {files.length} {files.length === 1 ? 'arquivo selecionado' : 'arquivos selecionados'}
+            </p>
+          )}
         </div>
 
         <button
