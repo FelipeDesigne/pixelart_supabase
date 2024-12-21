@@ -3,7 +3,7 @@ import { collection, query, orderBy, onSnapshot, where, addDoc, serverTimestamp,
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
-import { Send, Loader2, MessageCircle, Trash2 } from 'lucide-react';
+import { Send, Loader2, MessageCircle, Trash2, Users, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -33,6 +33,7 @@ export default function Messages() {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [showUsersList, setShowUsersList] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -167,8 +168,27 @@ export default function Messages() {
   return (
     <div className="flex h-[calc(100vh-4rem)]">
       {/* Users list */}
-      <div className="w-1/4 bg-white dark:bg-dark-lighter border-r border-gray-200 dark:border-gray-700 p-4 overflow-y-auto">
-        <h2 className="font-medium mb-4">Usuários</h2>
+      <div className={`
+        fixed md:static
+        w-full md:w-1/4 
+        h-full
+        bg-white dark:bg-dark-lighter 
+        border-r border-gray-200 dark:border-gray-700 
+        p-4 
+        overflow-y-auto
+        transition-transform duration-300
+        ${showUsersList ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        z-30
+      `}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-medium">Usuários</h2>
+          <button
+            onClick={() => setShowUsersList(false)}
+            className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-dark/50 rounded-lg"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+        </div>
         <div className="space-y-2">
           {users.map(user => {
             const unreadCount = unreadByUser.find(u => u.chatId === user.id)?.count || 0;
@@ -181,7 +201,10 @@ export default function Messages() {
                     ? 'bg-primary/20 text-primary'
                     : 'hover:bg-gray-50 dark:hover:bg-dark/50'
                 }`}
-                onClick={() => setSelectedUser(user)}
+                onClick={() => {
+                  setSelectedUser(user);
+                  setShowUsersList(false);
+                }}
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -201,83 +224,93 @@ export default function Messages() {
         </div>
       </div>
 
-      {/* Messages area */}
+      {/* Chat area */}
       <div className="flex-1 flex flex-col">
+        {/* Chat header */}
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowUsersList(true)}
+              className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-dark/50 rounded-lg"
+            >
+              <Users className="w-5 h-5" />
+            </button>
+            <div>
+              <h2 className="font-medium">
+                {selectedUser ? selectedUser.name : 'Selecione um usuário'}
+              </h2>
+              {selectedUser && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {selectedUser.email}
+                </p>
+              )}
+            </div>
+          </div>
+          {selectedUser && (
+            <button
+              onClick={deleteChat}
+              className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/20 rounded-lg"
+              title="Excluir conversa"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+
+        {/* Messages */}
         {selectedUser ? (
           <>
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-lighter flex justify-between items-center">
-              <div>
-                <h3 className="font-medium">{selectedUser.name}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{selectedUser.email}</p>
-              </div>
-              <button
-                onClick={deleteChat}
-                className="text-gray-500 hover:text-red-500 focus:outline-none"
-                title="Excluir chat"
-              >
-                <Trash2 size={20} />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-dark">
-              {messages.length === 0 ? (
-                <div className="text-center text-gray-500 dark:text-gray-400">
-                  Nenhuma mensagem ainda. Comece uma conversa!
-                </div>
-              ) : (
-                messages.map((message) => (
+            <div className="flex-1 p-4 overflow-y-auto">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`mb-4 flex ${
+                    message.isAdmin ? 'justify-end' : 'justify-start'
+                  }`}
+                >
                   <div
-                    key={message.id}
-                    className={`flex ${message.isAdmin ? 'justify-end' : 'justify-start'}`}
+                    className={`max-w-[70%] p-3 rounded-lg ${
+                      message.isAdmin
+                        ? 'bg-primary text-white'
+                        : 'bg-gray-100 dark:bg-dark text-gray-900 dark:text-gray-100'
+                    }`}
                   >
-                    <div
-                      className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                        message.isAdmin
-                          ? 'bg-primary text-dark'
-                          : 'bg-white dark:bg-dark-lighter'
-                      }`}
-                    >
-                      <p>{message.text}</p>
-                      <div className="flex items-center gap-2 text-xs opacity-70 mt-1">
-                        <span>{message.createdAt?.toDate().toLocaleTimeString()}</span>
-                        {!message.isAdmin && (
-                          <span className={message.read ? 'text-green-500' : 'text-gray-400'}>
-                            {message.read ? '• Lida' : '• Não lida'}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                    <p className="text-sm">{message.text}</p>
+                    <span className="text-xs opacity-75 mt-1 block">
+                      {message.createdAt?.toDate().toLocaleString()}
+                    </span>
                   </div>
-                ))
-              )}
+                </div>
+              ))}
               <div ref={messagesEndRef} />
             </div>
 
-            <form onSubmit={sendMessage} className="p-4 bg-white dark:bg-dark-lighter border-t border-gray-200 dark:border-gray-700">
+            {/* Message input */}
+            <form onSubmit={sendMessage} className="p-4 border-t border-gray-200 dark:border-gray-700">
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Digite sua mensagem..."
-                  className="flex-1 bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="flex-1 p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 <button
                   type="submit"
-                  disabled={sendingMessage}
-                  className="bg-primary text-dark px-4 py-2 rounded-lg hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary flex items-center gap-2"
+                  disabled={sendingMessage || !newMessage.trim()}
+                  className="p-2 bg-primary text-white rounded-lg disabled:opacity-50"
                 >
                   {sendingMessage ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    <Send size={20} />
+                    <Send className="w-5 h-5" />
                   )}
                 </button>
               </div>
             </form>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
+          <div className="flex-1 flex items-center justify-center text-gray-500">
             Selecione um usuário para iniciar uma conversa
           </div>
         )}
