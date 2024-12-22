@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Download } from 'lucide-react';
 import { usePWA } from '../contexts/PWAContext';
+import { toast } from 'react-hot-toast';
 
 export default function InstallPWA() {
   const { deferredPrompt, setDeferredPrompt, isStandalone, isInstallable } = usePWA();
@@ -13,11 +14,27 @@ export default function InstallPWA() {
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
-      console.log('[PWA] Prompting install...');
-      await deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log(`[PWA] User choice: ${outcome}`);
-      setDeferredPrompt(null);
+      try {
+        console.log('[PWA] Prompting install...');
+        await deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`[PWA] User choice: ${outcome}`);
+        
+        if (outcome === 'accepted') {
+          toast.success('App instalado com sucesso!', {
+            icon: '✅',
+            duration: 3000
+          });
+        }
+        
+        setDeferredPrompt(null);
+      } catch (error) {
+        console.error('[PWA] Installation error:', error);
+        toast.error('Erro ao instalar o app. Tente novamente.', {
+          icon: '❌',
+          duration: 3000
+        });
+      }
     }
   };
 

@@ -5,7 +5,6 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { PWAProvider } from './contexts/PWAContext';
 import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
-import InstallApp from './pages/InstallApp';
 import AdminLayout from './pages/admin/Layout';
 import UserLayout from './pages/user/Layout';
 import AdminDashboard from './pages/admin/Dashboard';
@@ -38,7 +37,6 @@ function AppRoutes() {
       <ReactRoutes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/install" element={<InstallApp />} />
         
         {/* Rotas do admin */}
         <Route
@@ -83,16 +81,16 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <Router>
+    <PWAProvider>
       <ThemeProvider>
         <AuthProvider>
           <NotificationProvider>
-            <PWAProvider>
+            <Router>
               <AppRoutes />
-            </PWAProvider>
+            </Router>
           </NotificationProvider>
         </AuthProvider>
       </ThemeProvider>
-    </Router>
+    </PWAProvider>
   );
 }
