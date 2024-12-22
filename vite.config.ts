@@ -15,65 +15,66 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      devOptions: {
-        enabled: true
-      },
-      registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      registerType: 'prompt',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'Pixel Art',
+        name: 'Pixel Art Management',
         short_name: 'PixelArt',
-        description: 'Crie e compartilhe pixel arts incríveis',
-        theme_color: '#142830',
-        background_color: '#142830',
+        description: 'Gerenciamento de Pixel Art',
+        theme_color: '#ffffff',
+        background_color: '#ffffff',
         display: 'standalone',
-        orientation: 'portrait',
-        start_url: '/',
         scope: '/',
-        prefer_related_applications: false,
-        categories: ['art', 'graphics', 'entertainment'],
+        start_url: '/',
+        orientation: 'portrait',
         icons: [
           {
-            src: 'icons/android-launchericon-48-48.png',
+            src: '/icons/android-launchericon-48-48.png',
             sizes: '48x48',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
           },
           {
-            src: 'icons/android-launchericon-72-72.png',
+            src: '/icons/android-launchericon-72-72.png',
             sizes: '72x72',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
           },
           {
-            src: 'icons/android-launchericon-96-96.png',
+            src: '/icons/android-launchericon-96-96.png',
             sizes: '96x96',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
           },
           {
-            src: 'icons/android-launchericon-144-144.png',
+            src: '/icons/android-launchericon-144-144.png',
             sizes: '144x144',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
           },
           {
-            src: 'icons/android-launchericon-192-192.png',
+            src: '/icons/android-launchericon-192-192.png',
             sizes: '192x192',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
           },
           {
-            src: 'icons/android-launchericon-512-512.png',
+            src: '/icons/android-launchericon-512-512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
+          },
+          {
+            src: '/icons/android-launchericon-512-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
           }
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        cleanupOutdatedCaches: true,
+        sourcemap: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -82,7 +83,7 @@ export default defineConfig({
               cacheName: 'google-fonts-cache',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365
+                maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 dias
               },
               cacheableResponse: {
                 statuses: [0, 200]
@@ -96,7 +97,7 @@ export default defineConfig({
               cacheName: 'gstatic-fonts-cache',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365
+                maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 dias
               },
               cacheableResponse: {
                 statuses: [0, 200]
@@ -104,6 +105,10 @@ export default defineConfig({
             }
           }
         ]
+      },
+      devOptions: {
+        enabled: true,
+        type: 'module'
       }
     })
   ],
