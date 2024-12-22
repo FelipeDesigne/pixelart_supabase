@@ -22,6 +22,7 @@ import NewRequest from './pages/user/NewRequest';
 import Chat from './pages/user/Chat';
 import UserRequests from './pages/user/Requests';
 import PrivateRoute from './components/PrivateRoute';
+import InstallPWA from './components/InstallPWA';
 import { useAuth } from './contexts/AuthContext';
 
 function HomeRedirect() {
@@ -33,6 +34,7 @@ function AppRoutes() {
   return (
     <>
       <Toaster position="top-right" />
+      <InstallPWA />
       <ReactRoutes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
