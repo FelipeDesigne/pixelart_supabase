@@ -21,10 +21,11 @@ import PrivateRoute from './components/PrivateRoute';
 import InstallPWA from './components/InstallPWA';
 import { useAuth } from './contexts/AuthContext';
 import InstallPage from './pages/InstallPage';
+import UploadArt from './pages/admin/UploadArt';
 
 function HomeRedirect() {
   const { isAdmin } = useAuth();
-  return <Navigate to={isAdmin ? "/admin" : "/"} />;
+  return <Navigate to={isAdmin ? "/admin" : "/user"} />;
 }
 
 function AppRoutes() {
@@ -50,12 +51,14 @@ function AppRoutes() {
           <Route path="messages" element={<AdminMessages />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="settings" element={<AdminSettings />} />
-          <Route path="user-arts" element={<UserArts />} />
+          <Route path="user-arts/:userId" element={<UserArts />} />
+          <Route path="requests" element={<AdminDashboard />} />
+          <Route path="upload-art" element={<UploadArt />} />
         </Route>
 
         {/* Rotas do usuário */}
         <Route
-          path="/"
+          path="/user"
           element={
             <PrivateRoute>
               <UserLayout />
@@ -69,7 +72,7 @@ function AppRoutes() {
           <Route path="settings" element={<Settings />} />
         </Route>
 
-        <Route path="/" element={<HomeRedirect />} />
+        <Route path="*" element={<HomeRedirect />} />
       </ReactRoutes>
     </>
   );

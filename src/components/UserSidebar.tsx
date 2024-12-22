@@ -21,9 +21,8 @@ export default function UserSidebar() {
 
   const menuItems = [
     { name: 'Início', icon: Home, path: '/user' },
-    { name: 'Perfil', icon: User, path: '/user/profile' },
-    { name: 'Minhas Artes', icon: Image, path: '/user/profile#gallery' },
-    { name: 'Solicitações', icon: FileText, path: '/user/requests' },
+    { name: 'Nova Solicitação', icon: Image, path: '/user/new-request' },
+    { name: 'Minhas Solicitações', icon: FileText, path: '/user/requests' },
     { 
       name: 'Chat', 
       icon: MessageCircle, 

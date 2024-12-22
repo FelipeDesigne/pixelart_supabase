@@ -14,7 +14,7 @@ interface User {
 }
 
 export default function UploadArt() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const navigate = useNavigate();
   const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
@@ -27,12 +27,19 @@ export default function UploadArt() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
+    // Verificar se o usuário está autenticado e é admin
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    
     if (!isAdmin) {
       navigate('/');
       return;
     }
+    
     fetchUsers();
-  }, [isAdmin, navigate]);
+  }, [isAdmin, navigate, user]);
 
   const fetchUsers = async () => {
     try {

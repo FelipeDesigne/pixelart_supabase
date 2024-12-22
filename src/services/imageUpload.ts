@@ -57,11 +57,8 @@ export async function uploadFinishedArt(file: File, userId: string, title: strin
     const sanitizedTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const fileName = `${sanitizedTitle}.${fileExt}`;
     
-    // Criar caminho do arquivo incluindo ano e mês
-    const now = new Date();
-    const year = now.getFullYear().toString();
-    const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    const filePath = `users/${userId}/artworks/${userName}/${year}/${month}/${fileName}`;
+    // Simplificar o caminho do arquivo
+    const filePath = `users/${userId}/artworks/${userName}/${fileName}`;
 
     console.log('Fazendo upload:', {
       title,
@@ -70,8 +67,6 @@ export async function uploadFinishedArt(file: File, userId: string, title: strin
       filePath,
       fileType: file.type,
       size: file.size,
-      year,
-      month,
       userName
     });
 

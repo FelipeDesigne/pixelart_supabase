@@ -61,27 +61,37 @@ export default function UserArts() {
             // Buscar arquivos usando o nome do usuário no caminho
             const { data: files, error: filesError } = await supabase.storage
               .from('PixelArt')
-              .list(`users/${userId}/artworks/${name}/2024/12`);
+              .list(`users/${userId}/artworks/${name}`);
 
             console.log('Arquivos encontrados:', {
-              path: `users/${userId}/artworks/${name}/2024/12`,
+              path: `users/${userId}/artworks/${name}`,
               files,
               error: filesError
             });
 
-            if (filesError) throw filesError;
+            if (filesError) {
+              console.error('Erro ao buscar arquivos:', filesError);
+              throw filesError;
+            }
+
+            if (!files || files.length === 0) {
+              console.log('Nenhum arquivo encontrado para o usuário');
+              setArts([]);
+              setLoading(false);
+              return;
+            }
 
             const allArtworks: Art[] = [];
 
             // Processar arquivos
-            for (const file of files || []) {
+            for (const file of files) {
               const { data: { publicUrl } } = supabase.storage
                 .from('PixelArt')
-                .getPublicUrl(`users/${userId}/artworks/${name}/2024/12/${file.name}`);
+                .getPublicUrl(`users/${userId}/artworks/${name}/${file.name}`);
 
               console.log('Processando arquivo:', {
                 name: file.name,
-                path: `users/${userId}/artworks/${name}/2024/12/${file.name}`,
+                path: `users/${userId}/artworks/${name}/${file.name}`,
                 metadata: file.metadata,
                 publicUrl
               });
@@ -94,7 +104,7 @@ export default function UserArts() {
                 fileUrl: publicUrl,
                 createdAt: file.created_at || new Date().toISOString(),
                 type: isVideo ? 'video' : 'image',
-                filePath: `users/${userId}/artworks/${name}/2024/12/${file.name}`
+                filePath: `users/${userId}/artworks/${name}/${file.name}`
               });
             }
 
