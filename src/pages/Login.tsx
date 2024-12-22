@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Palette, Lock, MessageCircle, Eye, EyeOff, Download } from 'lucide-react';
+import { Loader2, Palette, Lock, MessageCircle, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
-import { usePWA } from '../contexts/PWAContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -12,7 +11,6 @@ export default function Login() {
   const [showRecoveryModal, setShowRecoveryModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { signIn } = useAuth();
-  const { deferredPrompt, setDeferredPrompt } = usePWA();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,22 +41,6 @@ export default function Login() {
 
   const handleWhatsAppClick = () => {
     window.open('https://wa.me/5514981181568', '_blank');
-  };
-
-  const handleInstall = async () => {
-    if (!deferredPrompt) return;
-
-    try {
-      await deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      setDeferredPrompt(null);
-      
-      if (outcome === 'accepted') {
-        toast.success('App instalado com sucesso!');
-      }
-    } catch (error) {
-      console.error('Erro ao instalar:', error);
-    }
   };
 
   return (
