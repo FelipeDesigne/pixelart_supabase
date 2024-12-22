@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instalar Pixel Art</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(to bottom, rgba(79, 70, 229, 0.1), #ffffff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 24rem;
+            width: 100%;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: rgb(79, 70, 229);
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .qr-placeholder {
+            background: #f3f4f6;
+            height: 200px;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+        }
+
+        .install-button {
+            width: 100%;
+            background: rgb(79, 70, 229);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: background-color 0.2s;
+        }
+
+        .install-button:hover {
+            background: rgba(79, 70, 229, 0.9);
+        }
+
+        .install-button svg {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+
+        .success-message {
+            text-align: center;
+            color: #059669;
+            font-weight: 500;
+            display: none;
+        }
+
+        .success-message.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Pixel Art</h1>
+            <p class="subtitle">Instale nosso app para uma melhor experiência</p>
+        </div>
+
+        <div class="qr-placeholder">
+            Espaço para QR Code
+        </div>
+
+        <button id="installButton" class="install-button">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <span>Instalar App</span>
+        </button>
+
+        <div id="successMessage" class="success-message">
+            App já está instalado! ✨
+        </div>
+    </div>
+
+    <script>
+        let deferredPrompt;
+        const installButton = document.getElementById('installButton');
+        const successMessage = document.getElementById('successMessage');
+
+        // Verifica se já está instalado
+        function checkInstalled() {
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                || (window.navigator).standalone;
+            
+            if (isStandalone) {
+                installButton.style.display = 'none';
+                successMessage.classList.add('visible');
+            }
+        }
+
+        checkInstalled();
+
+        // Captura evento de instalação
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('beforeinstallprompt captured');
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+
+        // Manipula instalação
+        installButton.addEventListener('click', async () => {
+            try {
+                if (deferredPrompt) {
+                    console.log('Using native prompt');
+                    await deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`User choice: ${outcome}`);
+                    deferredPrompt = null;
+                    
+                    if (outcome === 'accepted') {
+                        installButton.style.display = 'none';
+                        successMessage.classList.add('visible');
+                    }
+                    return;
+                }
+
+                // Fallback para diferentes plataformas
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                const isAndroid = /Android/.test(navigator.userAgent);
+                const isMobile = isIOS || isAndroid;
+
+                if (isMobile) {
+                    if ('standalone' in window.navigator && !navigator.standalone) {
+                        alert('Para instalar no iOS:\n1. Toque no botão compartilhar\n2. Role para baixo e toque em "Adicionar à Tela Inicial"');
+                        return;
+                    }
+
+                    if (isAndroid) {
+                        // Força registro do service worker
+                        if ('serviceWorker' in navigator) {
+                            const registration = await navigator.serviceWorker.register('/sw.js');
+                            console.log('Service Worker registered:', registration);
+                        }
+                    }
+                }
+
+                // Instruções manuais
+                const message = isIOS 
+                    ? 'Para instalar:\n1. Toque no botão compartilhar\n2. Role para baixo e toque em "Adicionar à Tela Inicial"'
+                    : 'Para instalar:\n1. Abra o menu do navegador (três pontos)\n2. Toque em "Instalar aplicativo"';
+                
+                alert(message);
+            } catch (error) {
+                console.error('Installation error:', error);
+                alert('Não foi possível instalar automaticamente. Por favor, use as opções do navegador para instalar o app.');
+            }
+        });
+
+        // Registra service worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    const registration = await navigator.serviceWorker.register('/sw.js');
+                    console.log('ServiceWorker registration successful:', registration);
+                } catch (err) {
+                    console.error('ServiceWorker registration failed:', err);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -15,16 +15,43 @@
     <script type="module" src="/src/main.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('ServiceWorker registration successful');
-            })
-            .catch((err) => {
-              console.log('ServiceWorker registration failed: ', err);
+        window.addEventListener('load', async () => {
+          try {
+            const registration = await navigator.serviceWorker.register('/sw.js');
+            console.log('ServiceWorker registration successful:', registration);
+
+            // Atualiza o service worker imediatamente se houver uma nova versão
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed') {
+                  newWorker.postMessage({ type: 'SKIP_WAITING' });
+                }
+              });
             });
+
+            // Recarrega a página quando o service worker é atualizado
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+              if (!refreshing) {
+                refreshing = true;
+                window.location.reload();
+              }
+            });
+          } catch (err) {
+            console.error('ServiceWorker registration failed: ', err);
+          }
         });
       }
+
+      // Força o prompt de instalação se disponível
+      window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('beforeinstallprompt event fired');
+        // Previne o comportamento padrão
+        e.preventDefault();
+        // Armazena o evento para uso posterior
+        window.deferredPrompt = e;
+      });
     </script>
   </body>
 </html>

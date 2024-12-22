@@ -1,30 +1,28 @@
-import { HashRouter as Router, Routes as ReactRoutes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes as ReactRoutes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
-import AdminLayout from './pages/admin/Layout';
 import UserLayout from './pages/user/Layout';
-import AdminDashboard from './pages/admin/Dashboard';
-import Users from './pages/admin/Users';
-import Requests from './pages/admin/Requests';
-import Messages from './pages/admin/Messages';
-import AdminSettings from './pages/admin/Settings';
-import UploadArt from './pages/admin/UploadArt';
-import UserArts from './pages/admin/UserArts';
+import AdminLayout from './pages/admin/Layout';
 import Overview from './pages/user/Overview';
-import Settings from './pages/user/Settings';
-import Profile from './pages/user/Profile';
-import NewRequest from './pages/user/NewRequest';
 import Chat from './pages/user/Chat';
-import UserRequests from './pages/user/Requests';
+import NewRequest from './pages/user/NewRequest';
+import Requests from './pages/user/Requests';
+import Settings from './pages/user/Settings';
+import AdminDashboard from './pages/admin/Dashboard';
+import AdminMessages from './pages/admin/Messages';
+import AdminUsers from './pages/admin/Users';
+import AdminSettings from './pages/admin/Settings';
+import UserArts from './pages/admin/UserArts';
 import PrivateRoute from './components/PrivateRoute';
 import { useAuth } from './contexts/AuthContext';
+import InstallPage from './pages/InstallPage';
 
 function HomeRedirect() {
   const { isAdmin } = useAuth();
-  return <Navigate to={isAdmin ? "/admin" : "/user"} replace />;
+  return <Navigate to={isAdmin ? "/admin" : "/"} />;
 }
 
 function AppRoutes() {
@@ -33,6 +31,7 @@ function AppRoutes() {
       <Toaster position="top-right" />
       <ReactRoutes>
         <Route path="/login" element={<Login />} />
+        <Route path="/install" element={<InstallPage />} />
         
         {/* Rotas do admin */}
         <Route
@@ -44,17 +43,15 @@ function AppRoutes() {
           }
         >
           <Route index element={<AdminDashboard />} />
-          <Route path="users" element={<Users />} />
-          <Route path="user-arts/:userId" element={<UserArts />} />
-          <Route path="requests" element={<Requests />} />
-          <Route path="messages" element={<Messages />} />
+          <Route path="messages" element={<AdminMessages />} />
+          <Route path="users" element={<AdminUsers />} />
           <Route path="settings" element={<AdminSettings />} />
-          <Route path="upload-art" element={<UploadArt />} />
+          <Route path="user-arts" element={<UserArts />} />
         </Route>
 
         {/* Rotas do usuário */}
         <Route
-          path="/user"
+          path="/"
           element={
             <PrivateRoute>
               <UserLayout />
@@ -62,11 +59,10 @@ function AppRoutes() {
           }
         >
           <Route index element={<Overview />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="new-request" element={<NewRequest />} />
-          <Route path="requests" element={<UserRequests />} />
           <Route path="chat" element={<Chat />} />
+          <Route path="new-request" element={<NewRequest />} />
+          <Route path="requests" element={<Requests />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
 
         <Route path="/" element={<HomeRedirect />} />

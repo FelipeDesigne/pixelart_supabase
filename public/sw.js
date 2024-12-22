@@ -18,6 +18,7 @@ self.addEventListener('install', (event) => {
       })
       .then(() => {
         console.log('Service Worker installed');
+        self.skipWaiting(); // Força a ativação imediata
       })
   );
 });
@@ -35,6 +36,10 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
+    }).then(() => {
+      console.log('Service Worker activated');
+      // Toma controle imediatamente
+      return self.clients.claim();
     })
   );
 });
@@ -63,4 +68,11 @@ self.addEventListener('fetch', (event) => {
           });
       })
   );
+});
+
+// Manipula mensagens
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
