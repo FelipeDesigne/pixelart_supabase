@@ -17,6 +17,7 @@ import AdminMessages from './pages/admin/Messages';
 import AdminUsers from './pages/admin/Users';
 import AdminSettings from './pages/admin/Settings';
 import UserArts from './pages/admin/UserArts';
+import UserArts from './pages/user/Arts';
 import PrivateRoute from './components/PrivateRoute';
 import InstallPWA from './components/InstallPWA';
 import { useAuth } from './contexts/AuthContext';
@@ -70,6 +71,7 @@ function AppRoutes() {
           <Route path="chat" element={<Chat />} />
           <Route path="new-request" element={<NewRequest />} />
           <Route path="requests" element={<Requests />} />
+          <Route path="arts" element={<UserArts />} />
           <Route path="settings" element={<Settings />} />
         </Route>
 

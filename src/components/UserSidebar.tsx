@@ -23,6 +23,7 @@ export default function UserSidebar() {
     { name: 'Início', icon: Home, path: '/user' },
     { name: 'Nova Solicitação', icon: Image, path: '/user/new-request' },
     { name: 'Minhas Solicitações', icon: FileText, path: '/user/requests' },
+    { name: 'Minhas Artes', icon: Image, path: '/user/arts' },
     { 
       name: 'Chat', 
       icon: MessageCircle, 
