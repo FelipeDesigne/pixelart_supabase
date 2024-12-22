@@ -11,9 +11,7 @@ export default defineConfig({
         enabled: true
       },
       registerType: 'prompt',
-      strategies: 'generateSW',
       injectRegister: 'auto',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icons/*'],
       manifest: {
         name: 'Pixel Art',
         short_name: 'PixelArt',
@@ -24,7 +22,6 @@ export default defineConfig({
         orientation: 'portrait',
         start_url: '/',
         scope: '/',
-        prefer_related_applications: false,
         icons: [
           {
             src: 'icons/icon-192x192.png',
@@ -76,7 +73,9 @@ export default defineConfig({
   ],
   build: {
     outDir: 'dist',
-    emptyOutDir: true
+    emptyOutDir: true,
+    sourcemap: true,
+    minify: 'terser'
   },
   server: {
     port: 5174,

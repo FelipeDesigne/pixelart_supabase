@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Download, ArrowLeft, Share2 } from 'lucide-react';
+import { Download, ArrowLeft, Share2, MoreVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { usePWA } from '../contexts/PWAContext';
 import { toast } from 'react-hot-toast';
@@ -7,6 +7,17 @@ import { toast } from 'react-hot-toast';
 export default function InstallApp() {
   const navigate = useNavigate();
   const { deferredPrompt, setDeferredPrompt, isStandalone } = usePWA();
+
+  // Detecta o navegador
+  const getBrowser = () => {
+    const userAgent = navigator.userAgent.toLowerCase();
+    if (userAgent.includes('chrome')) return 'chrome';
+    if (userAgent.includes('firefox')) return 'firefox';
+    if (userAgent.includes('safari') && !userAgent.includes('chrome')) return 'safari';
+    if (userAgent.includes('edge')) return 'edge';
+    if (userAgent.includes('opera')) return 'opera';
+    return 'other';
+  };
 
   useEffect(() => {
     // Se já estiver instalado, redireciona
@@ -16,8 +27,37 @@ export default function InstallApp() {
     }
   }, [isStandalone, navigate]);
 
+  const showBrowserInstructions = () => {
+    const browser = getBrowser();
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
+
+    switch (browser) {
+      case 'chrome':
+        if (isIOS) {
+          toast.success('No Chrome iOS:\n1. Toque no menu (⋮)\n2. Toque em "Adicionar à tela inicial"', { duration: 6000 });
+        } else {
+          toast.success('No Chrome:\n1. Clique no menu (⋮)\n2. Clique em "Instalar Pixel Art..."', { duration: 6000 });
+        }
+        break;
+      case 'safari':
+        toast.success('No Safari:\n1. Toque no botão compartilhar (□↑)\n2. Role para baixo\n3. Toque em "Adicionar à Tela Inicial"', { duration: 6000 });
+        break;
+      case 'firefox':
+        toast.success('No Firefox:\n1. Clique no menu (≡)\n2. Clique em "Instalar aplicativo"', { duration: 6000 });
+        break;
+      case 'edge':
+        toast.success('No Edge:\n1. Clique no menu (...)\n2. Clique em "Aplicativos"\n3. Clique em "Instalar este site como aplicativo"', { duration: 6000 });
+        break;
+      case 'opera':
+        toast.success('No Opera:\n1. Clique no menu\n2. Clique em "Ir para página do aplicativo"\n3. Clique em "Instalar"', { duration: 6000 });
+        break;
+      default:
+        toast.success('Procure a opção "Adicionar à tela inicial" ou "Instalar" no menu do seu navegador', { duration: 6000 });
+    }
+  };
+
   const handleInstall = async () => {
-    // Para Android (Chrome)
+    // Para Android (Chrome) com prompt disponível
     if (deferredPrompt) {
       try {
         await deferredPrompt.prompt();
@@ -32,50 +72,24 @@ export default function InstallApp() {
         }
       } catch (error) {
         console.error('Erro ao instalar:', error);
-        toast.error('Erro ao instalar o app');
+        showBrowserInstructions();
       }
       return;
     }
 
-    // Para iOS (Safari)
-    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
-    const isSafari = /safari/i.test(navigator.userAgent) && !/chrome|android/i.test(navigator.userAgent);
-
-    if (isIOS && isSafari) {
-      toast.success('Para instalar no iOS:\n1. Toque no botão compartilhar\n2. Role para baixo\n3. Toque em "Adicionar à Tela Inicial"', {
-        duration: 6000,
-        style: {
-          maxWidth: '500px'
-        }
-      });
-      return;
-    }
-
-    // Tenta forçar o prompt de instalação
-    try {
-      // @ts-ignore
-      window.location.href = window.location.href + '?mode=standalone';
-      setTimeout(() => {
-        toast.success('Verifique o menu do seu navegador para instalar o app', {
-          duration: 4000
-        });
-      }, 1000);
-    } catch (error) {
-      console.error('Erro ao tentar instalar:', error);
-      toast.error('Não foi possível iniciar a instalação');
-    }
+    // Para outros casos, mostra instruções específicas
+    showBrowserInstructions();
   };
 
-  const isIOSSafari = /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase()) && 
-                     /safari/i.test(navigator.userAgent) && 
-                     !/chrome|android/i.test(navigator.userAgent);
+  const browser = getBrowser();
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
 
   return (
     <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8 bg-[#142830] p-10 rounded-xl shadow-lg">
         <div className="text-center">
           <div className="flex justify-center">
-            {isIOSSafari ? (
+            {browser === 'safari' ? (
               <Share2 className="h-12 w-12 text-[#A4FF43]" />
             ) : (
               <Download className="h-12 w-12 text-[#A4FF43]" />
@@ -102,7 +116,7 @@ export default function InstallApp() {
             onClick={handleInstall}
             className="w-full btn-primary flex items-center justify-center gap-2"
           >
-            {isIOSSafari ? (
+            {browser === 'safari' ? (
               <>
                 <Share2 className="h-5 w-5" />
                 <span>Compartilhar para Instalar</span>

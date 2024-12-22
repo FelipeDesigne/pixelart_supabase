@@ -1,29 +1,28 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 
 interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
 }
 
 interface PWAContextType {
   deferredPrompt: BeforeInstallPromptEvent | null;
-  setDeferredPrompt: (prompt: BeforeInstallPromptEvent | null) => void;
-  isInstallable: boolean;
+  setDeferredPrompt: React.Dispatch<React.SetStateAction<BeforeInstallPromptEvent | null>>;
   isStandalone: boolean;
+  isInstallable: boolean;
 }
 
 const PWAContext = createContext<PWAContextType | undefined>(undefined);
 
-declare global {
-  interface WindowEventMap {
-    beforeinstallprompt: BeforeInstallPromptEvent;
-  }
-}
-
 export function PWAProvider({ children }: { children: React.ReactNode }) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstallable, setIsInstallable] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [isInstallable, setIsInstallable] = useState(false);
 
   useEffect(() => {
     // Verifica se já está instalado
@@ -31,57 +30,72 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
                           (window.navigator as any).standalone ||
                           document.referrer.includes('android-app://');
+      
       setIsStandalone(isStandalone);
-      console.log('App está instalado:', isStandalone);
-    };
-
-    // Verifica se pode ser instalado
-    const checkInstallable = () => {
-      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
-      const isSafari = /safari/i.test(navigator.userAgent) && !/chrome|android/i.test(navigator.userAgent);
-      const canInstall = !isStandalone && (deferredPrompt !== null || (isIOS && isSafari));
-      setIsInstallable(canInstall);
-      console.log('App pode ser instalado:', canInstall);
-    };
-
-    // Captura o evento de instalação
-    const handler = (e: BeforeInstallPromptEvent) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setIsInstallable(true);
-      console.log('Evento beforeinstallprompt capturado');
+      console.log('[PWA] Is Standalone:', isStandalone);
     };
 
     // Monitora mudanças no modo de exibição
-    const mediaQuery = window.matchMedia('(display-mode: standalone)');
-    const handleDisplayModeChange = (e: MediaQueryListEvent) => {
-      setIsStandalone(e.matches);
-      console.log('Modo de exibição mudou para:', e.matches ? 'standalone' : 'browser');
+    const displayModeQuery = window.matchMedia('(display-mode: standalone)');
+    displayModeQuery.addListener(checkStandalone);
+    
+    // Captura o evento beforeinstallprompt
+    const handleBeforeInstallPrompt = (e: Event) => {
+      console.log('[PWA] Before Install Prompt Event triggered');
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setIsInstallable(true);
     };
 
-    // Registra os listeners
-    window.addEventListener('beforeinstallprompt', handler);
-    mediaQuery.addEventListener('change', handleDisplayModeChange);
+    // Registra o service worker manualmente
+    const registerServiceWorker = async () => {
+      if ('serviceWorker' in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.register('/sw.js', {
+            scope: '/'
+          });
+          console.log('[PWA] Service Worker registered:', registration);
+          
+          // Monitora atualizações
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  toast.success('Nova versão disponível! Recarregue a página.', {
+                    duration: 5000,
+                    icon: '🔄'
+                  });
+                }
+              });
+            }
+          });
+        } catch (error) {
+          console.error('[PWA] Service Worker registration failed:', error);
+        }
+      }
+    };
+
+    // Inicializa
+    checkStandalone();
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', () => {
-      setDeferredPrompt(null);
-      setIsInstallable(false);
+      console.log('[PWA] App installed');
       setIsStandalone(true);
-      console.log('App instalado com sucesso!');
+      setDeferredPrompt(null);
     });
 
-    // Faz as verificações iniciais
-    checkStandalone();
-    checkInstallable();
+    // Registra o service worker
+    registerServiceWorker();
 
-    // Limpa os listeners
     return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
-      mediaQuery.removeEventListener('change', handleDisplayModeChange);
+      displayModeQuery.removeListener(checkStandalone);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, [deferredPrompt]);
+  }, []);
 
   return (
-    <PWAContext.Provider value={{ deferredPrompt, setDeferredPrompt, isInstallable, isStandalone }}>
+    <PWAContext.Provider value={{ deferredPrompt, setDeferredPrompt, isStandalone, isInstallable }}>
       {children}
     </PWAContext.Provider>
   );
