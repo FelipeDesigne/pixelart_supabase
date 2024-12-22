@@ -33,33 +33,13 @@ export default function Arts() {
             const name = userSnap.data().name || userSnap.data().email;
             setUserName(name);
 
-            // Primeiro, listar o diretório do usuário
-            const { data: userDir, error: userDirError } = await supabase.storage
-              .from('PixelArt')
-              .list(`users/${user.uid}/artworks`);
-
-            if (userDirError) {
-              console.error('Erro ao buscar diretório do usuário:', userDirError);
-              throw userDirError;
-            }
-
-            // Encontrar a pasta com o nome do usuário
-            const userFolder = userDir?.find(dir => dir.name === name);
-            
-            if (!userFolder) {
-              console.log('Pasta do usuário não encontrada');
-              setArts([]);
-              setLoading(false);
-              return;
-            }
-
-            // Agora buscar os arquivos dentro da pasta do usuário
+            // Buscar arquivos usando o nome do usuário no caminho
             const { data: files, error: filesError } = await supabase.storage
               .from('PixelArt')
-              .list(`users/${user.uid}/artworks/${userFolder.name}`);
+              .list(`users/${user.uid}/artworks/${name}`);
 
             console.log('Arquivos encontrados:', {
-              path: `users/${user.uid}/artworks/${userFolder.name}`,
+              path: `users/${user.uid}/artworks/${name}`,
               files,
               error: filesError
             });
@@ -82,11 +62,11 @@ export default function Arts() {
             for (const file of files) {
               const { data: { publicUrl } } = supabase.storage
                 .from('PixelArt')
-                .getPublicUrl(`users/${user.uid}/artworks/${userFolder.name}/${file.name}`);
+                .getPublicUrl(`users/${user.uid}/artworks/${name}/${file.name}`);
 
               console.log('Processando arquivo:', {
                 name: file.name,
-                path: `users/${user.uid}/artworks/${userFolder.name}/${file.name}`,
+                path: `users/${user.uid}/artworks/${name}/${file.name}`,
                 metadata: file.metadata,
                 publicUrl
               });
@@ -99,7 +79,7 @@ export default function Arts() {
                 fileUrl: publicUrl,
                 createdAt: new Date(file.created_at || '').toLocaleString(),
                 type: isVideo ? 'video' : 'image',
-                filePath: `users/${user.uid}/artworks/${userFolder.name}/${file.name}`
+                filePath: `users/${user.uid}/artworks/${name}/${file.name}`
               });
             }
 
