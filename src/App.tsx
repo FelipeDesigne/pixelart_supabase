@@ -2,8 +2,10 @@ import { HashRouter as Router, Routes as ReactRoutes, Route, Navigate } from 're
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { PWAProvider } from './contexts/PWAContext';
 import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
+import InstallApp from './pages/InstallApp';
 import AdminLayout from './pages/admin/Layout';
 import UserLayout from './pages/user/Layout';
 import AdminDashboard from './pages/admin/Dashboard';
@@ -32,7 +34,9 @@ function AppRoutes() {
     <>
       <Toaster position="top-right" />
       <ReactRoutes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/install" element={<InstallApp />} />
         
         {/* Rotas do admin */}
         <Route
@@ -81,7 +85,9 @@ export default function App() {
       <ThemeProvider>
         <AuthProvider>
           <NotificationProvider>
-            <AppRoutes />
+            <PWAProvider>
+              <AppRoutes />
+            </PWAProvider>
           </NotificationProvider>
         </AuthProvider>
       </ThemeProvider>

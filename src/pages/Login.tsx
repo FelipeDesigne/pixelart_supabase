@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Loader2, Palette, Lock, MessageCircle, Eye, EyeOff, Download } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
-import { Loader2, Palette, Lock, MessageCircle, Eye, EyeOff } from 'lucide-react';
+import { usePWA } from '../contexts/PWAContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -11,6 +12,7 @@ export default function Login() {
   const [showRecoveryModal, setShowRecoveryModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { signIn } = useAuth();
+  const { deferredPrompt, setDeferredPrompt } = usePWA();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,6 +21,17 @@ export default function Login() {
 
     try {
       const isAdmin = await signIn(email, password);
+      
+      // Verificar se é o primeiro login
+      const isFirstLogin = !localStorage.getItem('hasLoggedInBefore');
+      if (isFirstLogin) {
+        localStorage.setItem('hasLoggedInBefore', 'true');
+        toast.success('Instale nosso app para uma melhor experiência!', {
+          duration: 5000,
+          icon: '📱'
+        });
+      }
+      
       navigate(isAdmin ? '/admin' : '/user', { replace: true });
     } catch (error: any) {
       console.error('Error signing in:', error);
@@ -30,6 +43,22 @@ export default function Login() {
 
   const handleWhatsAppClick = () => {
     window.open('https://wa.me/5514981181568', '_blank');
+  };
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+
+    try {
+      await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      setDeferredPrompt(null);
+      
+      if (outcome === 'accepted') {
+        toast.success('App instalado com sucesso!');
+      }
+    } catch (error) {
+      console.error('Erro ao instalar:', error);
+    }
   };
 
   return (
@@ -58,6 +87,7 @@ export default function Login() {
                 className="mt-1 block w-full px-3 py-2 bg-[#0E1A23] border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-[#A4FF43] focus:border-[#A4FF43] text-white"
               />
             </div>
+
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-300">
                 Senha
@@ -101,17 +131,31 @@ export default function Login() {
             className="btn-primary w-full flex justify-center"
           >
             {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
-              'Entrar'
+              <Lock className="h-5 w-5" />
             )}
+            <span className="ml-2">Entrar</span>
           </button>
         </form>
 
-        <div className="mt-6 flex justify-center space-x-4 text-sm text-gray-400">
-          <a href="#" className="hover:text-[#A4FF43]">Termos de Serviço</a>
-          <span>•</span>
-          <a href="#" className="hover:text-[#A4FF43]">Política de Privacidade</a>
+        <div className="mt-6 flex flex-col space-y-4">
+          <div className="flex justify-center space-x-4 text-sm text-gray-400">
+            <a href="#" className="hover:text-[#A4FF43]">Termos de Serviço</a>
+            <span>•</span>
+            <a href="#" className="hover:text-[#A4FF43]">Política de Privacidade</a>
+          </div>
+          
+          {/* Botão de instalação */}
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              onClick={() => navigate('/install')}
+              className="text-sm text-[#A4FF43] hover:text-[#8BD030]"
+            >
+              Instalar App
+            </button>
+          </div>
         </div>
       </div>
 
