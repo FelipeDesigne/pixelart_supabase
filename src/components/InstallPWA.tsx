@@ -96,7 +96,7 @@ export default function InstallPWA() {
       aria-label="Instalar aplicativo"
     >
       <Download className="w-5 h-5" />
-      <span className="hidden md:inline">Instalar App</span>
+      <span>Instalar App</span>
     </button>
   );
 }

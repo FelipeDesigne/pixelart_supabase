@@ -145,17 +145,6 @@ export default function Login() {
             <span>•</span>
             <a href="#" className="hover:text-[#A4FF43]">Política de Privacidade</a>
           </div>
-          
-          {/* Botão de instalação */}
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => navigate('/install')}
-              className="text-sm text-[#A4FF43] hover:text-[#8BD030]"
-            >
-              Instalar App
-            </button>
-          </div>
         </div>
       </div>
 
