@@ -83,6 +83,7 @@ export default function Arts() {
               });
             }
 
+            console.log('Artes encontradas:', allArtworks);
             setArts(allArtworks);
           }
         }
