@@ -17,7 +17,6 @@ import AdminMessages from './pages/admin/Messages';
 import AdminUsers from './pages/admin/Users';
 import AdminSettings from './pages/admin/Settings';
 import UserArts from './pages/admin/UserArts';
-import UserArts from './pages/user/Arts';
 import PrivateRoute from './components/PrivateRoute';
 import InstallPWA from './components/InstallPWA';
 import { useAuth } from './contexts/AuthContext';
