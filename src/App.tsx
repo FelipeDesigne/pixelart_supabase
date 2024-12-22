@@ -22,6 +22,7 @@ import InstallPWA from './components/InstallPWA';
 import { useAuth } from './contexts/AuthContext';
 import InstallPage from './pages/InstallPage';
 import UploadArt from './pages/admin/UploadArt';
+import AdminRequests from './pages/admin/Requests';
 
 function HomeRedirect() {
   const { isAdmin } = useAuth();
@@ -52,7 +53,7 @@ function AppRoutes() {
           <Route path="users" element={<AdminUsers />} />
           <Route path="settings" element={<AdminSettings />} />
           <Route path="user-arts/:userId" element={<UserArts />} />
-          <Route path="requests" element={<AdminDashboard />} />
+          <Route path="requests" element={<AdminRequests />} />
           <Route path="upload-art" element={<UploadArt />} />
         </Route>
 
