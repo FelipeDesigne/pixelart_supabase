@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 
 export default function InstallApp() {
   const navigate = useNavigate();
-  const { deferredPrompt, setDeferredPrompt, isInstallable, isStandalone } = usePWA();
+  const { deferredPrompt, setDeferredPrompt, isStandalone } = usePWA();
 
   useEffect(() => {
     // Se já estiver instalado, redireciona
@@ -48,12 +48,21 @@ export default function InstallApp() {
           maxWidth: '500px'
         }
       });
-    } else {
-      // Se não houver prompt disponível, sugere usar o menu do navegador
-      toast('Você pode instalar o app usando o menu do seu navegador', {
-        icon: '💡',
-        duration: 4000
-      });
+      return;
+    }
+
+    // Tenta forçar o prompt de instalação
+    try {
+      // @ts-ignore
+      window.location.href = window.location.href + '?mode=standalone';
+      setTimeout(() => {
+        toast.success('Verifique o menu do seu navegador para instalar o app', {
+          duration: 4000
+        });
+      }, 1000);
+    } catch (error) {
+      console.error('Erro ao tentar instalar:', error);
+      toast.error('Não foi possível iniciar a instalação');
     }
   };
 
