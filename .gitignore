@@ -13,13 +13,6 @@ dist
 dist-ssr
 *.local
 
-# Environment files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -31,16 +24,10 @@ dist-ssr
 *.sln
 *.sw?
 
-# Build files
-build
-dist
-out
+# Environment variables
+.env
+.env.*;
+!.env.example
 
-# Cache
-.cache
-.npm
-.eslintcache
-
-# Misc
-backup/
-.firebase/
+# PWA
+dev-dist/

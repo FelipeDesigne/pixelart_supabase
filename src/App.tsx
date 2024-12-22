@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes as ReactRoutes, Route, Navigate } from 
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { PWAProvider } from './contexts/PWAContext';
 import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
 import UserLayout from './pages/user/Layout';
@@ -17,6 +18,7 @@ import AdminUsers from './pages/admin/Users';
 import AdminSettings from './pages/admin/Settings';
 import UserArts from './pages/admin/UserArts';
 import PrivateRoute from './components/PrivateRoute';
+import InstallPWA from './components/InstallPWA';
 import { useAuth } from './contexts/AuthContext';
 import InstallPage from './pages/InstallPage';
 
@@ -29,7 +31,9 @@ function AppRoutes() {
   return (
     <>
       <Toaster position="top-right" />
+      <InstallPWA />
       <ReactRoutes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/install" element={<InstallPage />} />
         
@@ -73,14 +77,16 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <Router>
+    <PWAProvider>
       <ThemeProvider>
-        <AuthProvider>
-          <NotificationProvider>
-            <AppRoutes />
-          </NotificationProvider>
-        </AuthProvider>
+        <Router>
+          <AuthProvider>
+            <NotificationProvider>
+              <AppRoutes />
+            </NotificationProvider>
+          </AuthProvider>
+        </Router>
       </ThemeProvider>
-    </Router>
+    </PWAProvider>
   );
 }
