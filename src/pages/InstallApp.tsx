@@ -9,21 +9,12 @@ export default function InstallApp() {
   const { deferredPrompt, setDeferredPrompt, isInstallable, isStandalone } = usePWA();
 
   useEffect(() => {
+    // Se já estiver instalado, redireciona
     if (isStandalone) {
       toast.success('App já está instalado!');
       navigate('/login');
-      return;
     }
-
-    const timer = setTimeout(() => {
-      if (!isInstallable) {
-        toast.error('App não está disponível para instalação no momento');
-        navigate('/login');
-      }
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [isInstallable, isStandalone, navigate]);
+  }, [isStandalone, navigate]);
 
   const handleInstall = async () => {
     // Para Android (Chrome)
@@ -58,7 +49,11 @@ export default function InstallApp() {
         }
       });
     } else {
-      toast.error('App não está disponível para instalação');
+      // Se não houver prompt disponível, sugere usar o menu do navegador
+      toast('Você pode instalar o app usando o menu do seu navegador', {
+        icon: '💡',
+        duration: 4000
+      });
     }
   };
 
