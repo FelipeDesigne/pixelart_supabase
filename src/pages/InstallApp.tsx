@@ -1,54 +1,81 @@
 import { useEffect } from 'react';
-import { Download, ArrowLeft } from 'lucide-react';
+import { Download, ArrowLeft, Share2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { usePWA } from '../contexts/PWAContext';
 import { toast } from 'react-hot-toast';
 
 export default function InstallApp() {
   const navigate = useNavigate();
-  const { deferredPrompt, setDeferredPrompt } = usePWA();
+  const { deferredPrompt, setDeferredPrompt, isInstallable, isStandalone } = usePWA();
 
   useEffect(() => {
-    // Se não tiver o prompt depois de 2 segundos, volta para o login
+    if (isStandalone) {
+      toast.success('App já está instalado!');
+      navigate('/login');
+      return;
+    }
+
     const timer = setTimeout(() => {
-      if (!deferredPrompt) {
+      if (!isInstallable) {
         toast.error('App não está disponível para instalação no momento');
         navigate('/login');
       }
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [deferredPrompt, navigate]);
+  }, [isInstallable, isStandalone, navigate]);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) {
-      toast.error('App não está disponível para instalação');
+    // Para Android (Chrome)
+    if (deferredPrompt) {
+      try {
+        await deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        setDeferredPrompt(null);
+        
+        if (outcome === 'accepted') {
+          toast.success('App instalado com sucesso!');
+          navigate('/login');
+        } else {
+          toast.error('Instalação cancelada');
+        }
+      } catch (error) {
+        console.error('Erro ao instalar:', error);
+        toast.error('Erro ao instalar o app');
+      }
       return;
     }
 
-    try {
-      await deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      setDeferredPrompt(null);
-      
-      if (outcome === 'accepted') {
-        toast.success('App instalado com sucesso!');
-        navigate('/login');
-      } else {
-        toast.error('Instalação cancelada');
-      }
-    } catch (error) {
-      console.error('Erro ao instalar:', error);
-      toast.error('Erro ao instalar o app');
+    // Para iOS (Safari)
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
+    const isSafari = /safari/i.test(navigator.userAgent) && !/chrome|android/i.test(navigator.userAgent);
+
+    if (isIOS && isSafari) {
+      toast.success('Para instalar no iOS:\n1. Toque no botão compartilhar\n2. Role para baixo\n3. Toque em "Adicionar à Tela Inicial"', {
+        duration: 6000,
+        style: {
+          maxWidth: '500px'
+        }
+      });
+    } else {
+      toast.error('App não está disponível para instalação');
     }
   };
+
+  const isIOSSafari = /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase()) && 
+                     /safari/i.test(navigator.userAgent) && 
+                     !/chrome|android/i.test(navigator.userAgent);
 
   return (
     <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8 bg-[#142830] p-10 rounded-xl shadow-lg">
         <div className="text-center">
           <div className="flex justify-center">
-            <Download className="h-12 w-12 text-[#A4FF43]" />
+            {isIOSSafari ? (
+              <Share2 className="h-12 w-12 text-[#A4FF43]" />
+            ) : (
+              <Download className="h-12 w-12 text-[#A4FF43]" />
+            )}
           </div>
           <h2 className="mt-6 text-3xl font-bold text-white">Instalar App</h2>
           <p className="mt-2 text-sm text-gray-400">
@@ -71,8 +98,17 @@ export default function InstallApp() {
             onClick={handleInstall}
             className="w-full btn-primary flex items-center justify-center gap-2"
           >
-            <Download className="h-5 w-5" />
-            <span>Instalar Agora</span>
+            {isIOSSafari ? (
+              <>
+                <Share2 className="h-5 w-5" />
+                <span>Compartilhar para Instalar</span>
+              </>
+            ) : (
+              <>
+                <Download className="h-5 w-5" />
+                <span>Instalar Agora</span>
+              </>
+            )}
           </button>
 
           <button
