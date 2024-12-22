@@ -83,13 +83,13 @@ export default function App() {
   return (
     <PWAProvider>
       <ThemeProvider>
-        <AuthProvider>
-          <NotificationProvider>
-            <Router>
+        <Router>
+          <AuthProvider>
+            <NotificationProvider>
               <AppRoutes />
-            </Router>
-          </NotificationProvider>
-        </AuthProvider>
+            </NotificationProvider>
+          </AuthProvider>
+        </Router>
       </ThemeProvider>
     </PWAProvider>
   );
