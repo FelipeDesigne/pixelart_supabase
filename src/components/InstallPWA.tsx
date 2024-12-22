@@ -20,16 +20,6 @@ export default function InstallPWA() {
       if (isMobile && !isInstalled) {
         console.log('[PWA] Mobile device detected, showing install button');
         setShowButton(true);
-        
-        // Verifica se o app é instalável no Chrome/Edge
-        const isChrome = /Chrome|Edge/.test(navigator.userAgent);
-        if (isChrome) {
-          // Verifica se o manifesto está presente
-          const manifestLink = document.querySelector('link[rel="manifest"]');
-          if (manifestLink) {
-            console.log('[PWA] Manifest found, app should be installable');
-          }
-        }
       }
     };
 
@@ -47,18 +37,9 @@ export default function InstallPWA() {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // Monitora mudanças no modo de exibição
-    const displayModeQuery = window.matchMedia('(display-mode: standalone)');
-    const handleDisplayModeChange = () => {
-      console.log('[PWA] Display mode changed');
-      checkInstallable();
-    };
-    displayModeQuery.addListener(handleDisplayModeChange);
-
     return () => {
       clearTimeout(timer);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      displayModeQuery.removeListener(handleDisplayModeChange);
     };
   }, [setDeferredPrompt]);
 
@@ -76,14 +57,6 @@ export default function InstallPWA() {
         console.error('[PWA] Error prompting install:', error);
       }
       setDeferredPrompt(null);
-    } else {
-      console.log('[PWA] Using manual install instructions');
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      if (isIOS) {
-        alert('Para instalar o app:\n1. Toque no botão compartilhar (ícone com quadrado e seta para cima)\n2. Role para baixo e toque em "Adicionar à Tela Inicial"');
-      } else {
-        alert('Para instalar o app:\n1. Abra o menu do navegador (três pontos)\n2. Toque em "Instalar aplicativo" ou "Adicionar à tela inicial"');
-      }
     }
   };
 
