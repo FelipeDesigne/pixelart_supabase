@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Loader2, Play } from 'lucide-react';
+import { Loader2, Play, Download } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
+import { downloadAndDeleteArt } from '../../services/imageUpload';
 
 interface Art {
   id: string;
@@ -19,6 +21,8 @@ export default function Arts() {
   const [loading, setLoading] = useState(true);
   const [arts, setArts] = useState<Art[]>([]);
   const [userName, setUserName] = useState('');
+  const [selectedItem, setSelectedItem] = useState<Art | null>(null);
+  const [downloading, setDownloading] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUserAndArts = async () => {
@@ -75,9 +79,9 @@ export default function Arts() {
 
               allArtworks.push({
                 id: file.name,
-                title: file.name,
+                title: file.name.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
                 fileUrl: publicUrl,
-                createdAt: new Date(file.created_at || '').toLocaleString(),
+                createdAt: file.created_at || new Date().toISOString(),
                 type: isVideo ? 'video' : 'image',
                 filePath: `users/${user.uid}/artworks/${name}/${file.name}`
               });
@@ -96,6 +100,27 @@ export default function Arts() {
 
     fetchUserAndArts();
   }, [user]);
+
+  const handleDownload = async (art: Art) => {
+    try {
+      setDownloading(art.id);
+      
+      // Extrair o nome do arquivo do caminho
+      const fileName = art.filePath.split('/').pop() || 'download';
+      
+      await downloadAndDeleteArt(art.filePath, fileName);
+      
+      // Remover a arte da lista
+      setArts(prevArts => prevArts.filter(a => a.id !== art.id));
+      
+      toast.success('Arquivo baixado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao baixar arquivo:', error);
+      toast.error('Erro ao baixar arquivo');
+    } finally {
+      setDownloading(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -119,26 +144,108 @@ export default function Arts() {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {arts.map((art) => (
-          <div key={art.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div key={art.id} className="bg-dark-lighter rounded-lg shadow-md overflow-hidden hover:transform hover:scale-105 transition-transform duration-200">
             {art.type === 'video' ? (
-              <div className="relative aspect-video bg-gray-100">
-                <video src={art.fileUrl} className="w-full h-full object-cover" controls>
+              <div className="relative aspect-video bg-gray-100 cursor-pointer" onClick={() => setSelectedItem(art)}>
+                <video 
+                  src={art.fileUrl} 
+                  className="w-full h-full object-cover"
+                >
                   Seu navegador não suporta o elemento de vídeo.
                 </video>
-                <Play className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 text-white opacity-75" />
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <Play className="w-12 h-12 text-white opacity-75" />
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownload(art);
+                  }}
+                  disabled={downloading === art.id}
+                  className="absolute top-2 right-2 p-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {downloading === art.id ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Download className="w-5 h-5" />
+                  )}
+                </button>
               </div>
             ) : (
-              <div className="aspect-square bg-gray-100">
+              <div className="aspect-square bg-gray-100 cursor-pointer relative" onClick={() => setSelectedItem(art)}>
                 <img src={art.fileUrl} alt={art.title} className="w-full h-full object-cover" />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownload(art);
+                  }}
+                  disabled={downloading === art.id}
+                  className="absolute top-2 right-2 p-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {downloading === art.id ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Download className="w-5 h-5" />
+                  )}
+                </button>
               </div>
             )}
-            <div className="p-4">
-              <h3 className="font-semibold text-lg mb-1">{art.title}</h3>
-              <p className="text-sm text-gray-500">{art.createdAt}</p>
+            <div className="p-4 bg-dark-lighter">
+              <h3 className="font-medium text-lg mb-2 text-white">
+                {art.title || 'Sem título'}
+              </h3>
+              <p className="text-xs text-gray-400">
+                {art.createdAt ? new Date(art.createdAt).toLocaleString('pt-BR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) : 'Data não disponível'}
+              </p>
             </div>
           </div>
         ))}
       </div>
+
+      {selectedItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedItem(null)}>
+          <div 
+            className="w-full h-full md:w-auto md:h-auto max-w-[90vw] max-h-[90vh] bg-white rounded-lg p-4 relative flex items-center justify-center" 
+            onClick={e => e.stopPropagation()}
+          >
+            {selectedItem.type === 'video' ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <video 
+                  src={selectedItem.fileUrl} 
+                  className="max-w-full max-h-[80vh] w-auto h-auto"
+                  controls 
+                  autoPlay
+                >
+                  Seu navegador não suporta o elemento de vídeo.
+                </video>
+              </div>
+            ) : (
+              <img 
+                src={selectedItem.fileUrl} 
+                alt={selectedItem.title} 
+                className="max-w-full max-h-[80vh] w-auto h-auto object-contain" 
+              />
+            )}
+            <button
+              onClick={() => handleDownload(selectedItem)}
+              disabled={downloading === selectedItem.id}
+              className="absolute top-2 right-2 p-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50 z-10"
+            >
+              {downloading === selectedItem.id ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Download className="w-5 h-5" />
+              )}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

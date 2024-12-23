@@ -63,10 +63,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const adminStatus = await checkAdminStatus(user);
         console.log('Admin status determined:', adminStatus);
         setIsAdmin(adminStatus);
+        localStorage.setItem('authUser', JSON.stringify(user));
+        localStorage.setItem('isAdmin', JSON.stringify(adminStatus));
       } else {
-        console.log('No user logged in');
-        setUser(null);
-        setIsAdmin(false);
+        // Verificar se existe usuário no localStorage
+        const storedUser = localStorage.getItem('authUser');
+        const storedIsAdmin = localStorage.getItem('isAdmin');
+        
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+          setIsAdmin(storedIsAdmin === 'true');
+        } else {
+          console.log('No user logged in');
+          setUser(null);
+          setIsAdmin(false);
+          localStorage.removeItem('authUser');
+          localStorage.removeItem('isAdmin');
+        }
       }
       
       setLoading(false);
@@ -83,6 +96,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const adminStatus = await checkAdminStatus(userCredential.user);
       console.log('Sign in successful. Admin status:', adminStatus);
       setIsAdmin(adminStatus);
+      localStorage.setItem('authUser', JSON.stringify(userCredential.user));
+      localStorage.setItem('isAdmin', JSON.stringify(adminStatus));
       return adminStatus;
     } catch (error: any) {
       console.error('Sign in error:', error);
@@ -109,13 +124,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  async function signOut() {
-    try {
-      await firebaseSignOut(auth);
-      navigate('/login');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
+  const signOut = async () => {
+    await firebaseSignOut(auth);
+    setUser(null);
+    setIsAdmin(false);
+    localStorage.removeItem('authUser');
+    localStorage.removeItem('isAdmin');
+    navigate('/');
   };
 
   const value = {
