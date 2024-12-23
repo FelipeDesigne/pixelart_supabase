@@ -129,64 +129,71 @@ export default function UserRequests() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Minhas Solicitações</h1>
+        <h1 className="text-3xl font-bold text-white">Minhas Solicitações</h1>
       </div>
       
       {/* Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="bg-dark-lighter p-6 rounded-lg">
-          <h3 className="text-lg font-semibold mb-2">Total de Solicitações</h3>
-          <p className="text-2xl font-bold">{stats.total}</p>
+        <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
+          <h3 className="text-lg font-semibold mb-2 text-white">Total de Solicitações</h3>
+          <p className="text-2xl font-bold text-white">{stats.total}</p>
         </div>
-        <div className="bg-dark-lighter p-6 rounded-lg">
-          <h3 className="text-lg font-semibold mb-2">Pendentes</h3>
+        <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
+          <h3 className="text-lg font-semibold mb-2 text-white">Pendentes</h3>
           <p className="text-2xl font-bold text-yellow-500">{stats.pending}</p>
         </div>
-        <div className="bg-dark-lighter p-6 rounded-lg">
-          <h3 className="text-lg font-semibold mb-2">Em Andamento</h3>
+        <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
+          <h3 className="text-lg font-semibold mb-2 text-white">Em Andamento</h3>
           <p className="text-2xl font-bold text-blue-500">{stats.in_progress}</p>
         </div>
-        <div className="bg-dark-lighter p-6 rounded-lg">
-          <h3 className="text-lg font-semibold mb-2">Concluídas</h3>
+        <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
+          <h3 className="text-lg font-semibold mb-2 text-white">Concluídas</h3>
           <p className="text-2xl font-bold text-green-500">{stats.completed}</p>
         </div>
-        <div className="bg-dark-lighter p-6 rounded-lg">
-          <h3 className="text-lg font-semibold mb-2">Rejeitadas</h3>
+        <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
+          <h3 className="text-lg font-semibold mb-2 text-white">Rejeitadas</h3>
           <p className="text-2xl font-bold text-red-500">{stats.rejected}</p>
         </div>
       </div>
 
       {/* Gráfico */}
-      <div className="bg-dark-lighter p-6 rounded-lg">
+      <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">Solicitações por Dia</h2>
+          <h2 className="text-xl font-semibold text-white">Solicitações por Dia</h2>
           <select
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="bg-dark text-white px-3 py-2 rounded-lg"
+            className="bg-[#1a1a2e] text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb] focus:border-transparent"
           >
-            <option value="7">Últimos 7 dias</option>
-            <option value="15">Últimos 15 dias</option>
-            <option value="30">Últimos 30 dias</option>
+            <option value="7" className="bg-[#1a1a2e]">Últimos 7 dias</option>
+            <option value="15" className="bg-[#1a1a2e]">Últimos 15 dias</option>
+            <option value="30" className="bg-[#1a1a2e]">Últimos 30 dias</option>
           </select>
         </div>
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="requests" stroke="#8884d8" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis dataKey="date" stroke="#9CA3AF" />
+              <YAxis stroke="#9CA3AF" />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: '#1a1a2e',
+                  border: '1px solid #374151',
+                  borderRadius: '0.5rem'
+                }} 
+                labelStyle={{ color: '#fff' }}
+              />
+              <Line type="monotone" dataKey="requests" stroke="#2563eb" strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       {/* Lista de Solicitações */}
-      <div className="bg-dark-lighter p-6 rounded-lg">
+      <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">Histórico de Solicitações</h2>
+          <h2 className="text-xl font-semibold text-white">Histórico de Solicitações</h2>
           <div className="flex gap-4">
             <div className="relative">
               <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -195,19 +202,19 @@ export default function UserRequests() {
                 placeholder="Buscar solicitação..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 bg-dark rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="pl-10 pr-4 py-2 bg-[#1a1a2e] text-white rounded-lg border border-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2563eb] focus:border-transparent"
               />
             </div>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-dark text-white px-3 py-2 rounded-lg"
+              className="bg-[#1a1a2e] text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb] focus:border-transparent"
             >
-              <option value="all">Todos os status</option>
-              <option value="pending">Pendentes</option>
-              <option value="in_progress">Em Andamento</option>
-              <option value="completed">Concluídas</option>
-              <option value="rejected">Rejeitadas</option>
+              <option value="all" className="bg-[#1a1a2e]">Todos os status</option>
+              <option value="pending" className="bg-[#1a1a2e]">Pendentes</option>
+              <option value="in_progress" className="bg-[#1a1a2e]">Em Andamento</option>
+              <option value="completed" className="bg-[#1a1a2e]">Concluídas</option>
+              <option value="rejected" className="bg-[#1a1a2e]">Rejeitadas</option>
             </select>
           </div>
         </div>
@@ -216,16 +223,16 @@ export default function UserRequests() {
           <table className="w-full">
             <thead>
               <tr className="text-left border-b border-gray-700">
-                <th className="pb-3">Status</th>
-                <th className="pb-3">Data</th>
-                <th className="pb-3">Descrição</th>
-                <th className="pb-3">Imagem</th>
-                <th className="pb-3">Ações</th>
+                <th className="pb-3 text-gray-400">Status</th>
+                <th className="pb-3 text-gray-400">Data</th>
+                <th className="pb-3 text-gray-400">Descrição</th>
+                <th className="pb-3 text-gray-400">Imagem</th>
+                <th className="pb-3 text-gray-400">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
               {filteredRequests.map((request) => (
-                <tr key={request.id} className="hover:bg-dark">
+                <tr key={request.id} className="hover:bg-[#1a1a2e] text-white">
                   <td className="py-3">
                     <span className={`px-2 py-1 rounded-full text-xs
                       ${request.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
@@ -239,9 +246,7 @@ export default function UserRequests() {
                        request.status === 'completed' ? 'Concluída' : 'Rejeitada'}
                     </span>
                   </td>
-                  <td className="py-3">
-                    {format(request.createdAt.toDate(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                  </td>
+                  <td className="py-3">{format(request.createdAt.toDate(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</td>
                   <td className="py-3">{request.description}</td>
                   <td className="py-3">
                     {request.imageUrl && (
@@ -259,7 +264,7 @@ export default function UserRequests() {
                         setSelectedRequest(request);
                         setIsModalOpen(true);
                       }}
-                      className="flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                      className="flex items-center gap-2 px-3 py-1 rounded-lg bg-[#2563eb]/10 text-[#2563eb] hover:bg-[#2563eb]/20 transition-colors"
                     >
                       <Eye className="w-4 h-4" />
                       <span>Detalhes</span>
@@ -276,14 +281,14 @@ export default function UserRequests() {
       {isModalOpen && selectedRequest && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4">
-            <div className="fixed inset-0 bg-black bg-opacity-30" onClick={() => setIsModalOpen(false)} />
+            <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setIsModalOpen(false)} />
             
-            <div className="relative bg-dark-lighter p-6 rounded-lg max-w-2xl w-full">
+            <div className="relative bg-[#16162a] p-6 rounded-lg max-w-2xl w-full border border-gray-700">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold">Detalhes da Solicitação</h2>
+                <h2 className="text-xl font-bold text-white">Detalhes da Solicitação</h2>
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="p-1 hover:bg-dark rounded-lg transition-colors"
+                  className="p-1 hover:bg-[#1a1a2e] rounded-lg transition-colors text-gray-400 hover:text-white"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -307,20 +312,20 @@ export default function UserRequests() {
 
                 <div>
                   <h3 className="text-sm text-gray-400">Data da Solicitação</h3>
-                  <p className="mt-1">
+                  <p className="mt-1 text-white">
                     {format(selectedRequest.createdAt.toDate(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                   </p>
                 </div>
 
                 <div>
                   <h3 className="text-sm text-gray-400">Descrição</h3>
-                  <p className="mt-1">{selectedRequest.description}</p>
+                  <p className="mt-1 text-white">{selectedRequest.description}</p>
                 </div>
 
                 {selectedRequest.reference && (
                   <div>
                     <h3 className="text-sm text-gray-400">Referência</h3>
-                    <p className="mt-1">{selectedRequest.reference}</p>
+                    <p className="mt-1 text-white">{selectedRequest.reference}</p>
                   </div>
                 )}
 
@@ -341,7 +346,7 @@ export default function UserRequests() {
                     <h3 className="text-sm text-gray-400">Comentários</h3>
                     <div className="mt-2 space-y-2">
                       {selectedRequest.comments.map((comment, index) => (
-                        <div key={index} className="bg-dark p-3 rounded-lg">
+                        <div key={index} className="bg-[#1a1a2e] p-3 rounded-lg text-white border border-gray-700">
                           {comment}
                         </div>
                       ))}
@@ -353,7 +358,7 @@ export default function UserRequests() {
               <div className="mt-6 flex justify-end">
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-lg bg-dark text-white hover:bg-dark-accent transition-colors"
+                  className="px-4 py-2 rounded-lg bg-[#2563eb] text-white hover:bg-[#2563eb]/90 transition-colors"
                 >
                   Fechar
                 </button>

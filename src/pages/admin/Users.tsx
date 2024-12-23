@@ -301,66 +301,60 @@ export default function Users() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Usuários</h1>
-        <div className="flex items-center gap-4">
-          <button 
-            className="btn-primary flex items-center gap-2"
-            onClick={() => setShowAddModal(true)}
-          >
-            <UserPlus className="w-4 h-4" />
-            Adicionar Usuário
-          </button>
-          <button 
-            onClick={handleLogout}
-            className="btn-secondary flex items-center gap-2"
-          >
-            <LogOut className="w-4 h-4" />
-            Sair
-          </button>
+        <h1 className="text-2xl font-bold text-white">Usuários</h1>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-[#2563eb] hover:bg-[#3b82f6] focus:outline-none transition-colors"
+        >
+          <UserPlus className="h-5 w-5 mr-2" />
+          Novo Usuário
+        </button>
+      </div>
+
+      {/* Filtros */}
+      <div className="bg-[#16162a] p-4 rounded-lg shadow space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">
+              Buscar
+            </label>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Nome ou email"
+              className="w-full px-3 py-2 bg-[#1a1a2e] border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-[#2563eb] focus:border-[#2563eb]"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Barra de Pesquisa */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <input
-          type="text"
-          placeholder="Pesquisar usuários..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 bg-dark-lighter rounded-lg border border-gray-700 focus:outline-none focus:border-primary"
-        />
-      </div>
-
       {/* Lista de Usuários */}
-      <div className="bg-dark-lighter rounded-lg overflow-hidden">
+      <div className="bg-[#16162a] rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-700">
-            <thead>
-              <tr className="bg-dark text-gray-400">
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                  Nome
+            <thead className="bg-[#1a1a2e]">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Usuário
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                  Função
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Tipo
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
                   Ações
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-dark-lighter divide-y divide-gray-700">
+            <tbody className="divide-y divide-gray-700">
               {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-dark-accent/50">
+                <tr key={user.id} className="hover:bg-[#1a1a2e]">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
+                      <div className="h-10 w-10 flex-shrink-0">
                         <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
                           <span className="text-lg font-medium text-white">
                             {user.name.charAt(0).toUpperCase()}
@@ -371,27 +365,23 @@ export default function Users() {
                         <div className="text-sm font-medium text-white">
                           {user.name}
                         </div>
+                        <div className="text-sm text-gray-300">{user.email}</div>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-300">{user.email}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary/20 text-primary">
-                      {user.role === 'admin' ? 'Administrador' : 'Usuário'}
-                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         user.isActive === false
-                          ? 'bg-red-500/20 text-red-500'
-                          : 'bg-green-500/20 text-green-500'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-green-100 text-green-800'
                       }`}
                     >
                       {user.isActive === false ? 'Inativo' : 'Ativo'}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                    {user.role === 'admin' ? 'Admin' : 'Usuário'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">
@@ -451,42 +441,42 @@ export default function Users() {
       {/* Modal de Adicionar Usuário */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-dark-lighter rounded-lg p-6 max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4">Adicionar Usuário</h2>
+          <div className="bg-[#16162a] rounded-lg p-6 max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4 text-white">Adicionar Usuário</h2>
             <form onSubmit={handleAddUser} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Nome
                 </label>
                 <input
                   type="text"
                   value={newUser.name}
                   onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 bg-dark border border-gray-600 rounded-md"
+                  className="w-full px-3 py-2 bg-[#1a1a2e] border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-[#2563eb] focus:border-[#2563eb]"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Email
                 </label>
                 <input
                   type="email"
                   value={newUser.email}
                   onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 bg-dark border border-gray-600 rounded-md"
+                  className="w-full px-3 py-2 bg-[#1a1a2e] border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-[#2563eb] focus:border-[#2563eb]"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   URL do Google Drive
                 </label>
                 <input
                   type="url"
                   value={newUser.driveUrl}
                   onChange={(e) => setNewUser({ ...newUser, driveUrl: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 bg-dark border border-gray-600 rounded-md"
+                  className="w-full px-3 py-2 bg-[#1a1a2e] border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-[#2563eb] focus:border-[#2563eb]"
                   placeholder="Cole aqui o link da pasta do Google Drive"
                 />
                 <p className="mt-1 text-sm text-gray-400">
@@ -494,37 +484,37 @@ export default function Users() {
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Senha
                 </label>
                 <input
                   type="password"
                   value={newUser.password}
                   onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 bg-dark border border-gray-600 rounded-md"
+                  className="w-full px-3 py-2 bg-[#1a1a2e] border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-[#2563eb] focus:border-[#2563eb]"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Confirmar Senha
                 </label>
                 <input
                   type="password"
                   value={newUser.confirmPassword}
                   onChange={(e) => setNewUser({ ...newUser, confirmPassword: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 bg-dark border border-gray-600 rounded-md"
+                  className="w-full px-3 py-2 bg-[#1a1a2e] border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-[#2563eb] focus:border-[#2563eb]"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Função
                 </label>
                 <select
                   value={newUser.role}
                   onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 bg-dark border border-gray-600 rounded-md"
+                  className="w-full px-3 py-2 bg-[#1a1a2e] border border-gray-600 rounded-md text-white focus:outline-none focus:ring-[#2563eb] focus:border-[#2563eb]"
                 >
                   <option value="user">Usuário</option>
                   <option value="admin">Administrador</option>
@@ -534,14 +524,14 @@ export default function Users() {
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 border border-gray-600 text-gray-300 rounded-lg hover:bg-dark"
+                  className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white focus:outline-none"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-primary px-4 py-2"
+                  className="px-4 py-2 bg-[#2563eb] text-white text-sm font-medium rounded-md hover:bg-[#3b82f6] focus:outline-none transition-colors"
                 >
                   {loading ? 'Criando...' : 'Criar Usuário'}
                 </button>
@@ -553,10 +543,10 @@ export default function Users() {
 
       {/* Modal de Desativar Usuário */}
       {showDeactivateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-dark-lighter rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Desativar Usuário</h2>
-            <p className="text-gray-400 mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-[#16162a] rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4 text-white">Desativar Usuário</h2>
+            <p className="text-gray-300 mb-4">
               Você está prestes a desativar o usuário {selectedUser?.name}. 
               Por favor, informe o motivo da desativação:
             </p>
@@ -564,7 +554,7 @@ export default function Users() {
             <textarea
               value={deactivationReason}
               onChange={(e) => setDeactivationReason(e.target.value)}
-              className="w-full bg-dark border border-dark-accent rounded-lg px-4 py-2 mb-4 focus:outline-none focus:border-primary"
+              className="w-full bg-[#1a1a2e] border border-gray-600 rounded-md px-4 py-2 mb-4 focus:outline-none focus:ring-[#2563eb] focus:border-[#2563eb]"
               placeholder="Motivo da desativação..."
               rows={4}
             />
@@ -576,14 +566,14 @@ export default function Users() {
                   setDeactivationReason('');
                   setSelectedUser(null);
                 }}
-                className="btn-outline"
+                className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white focus:outline-none"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleDeactivateUser}
                 disabled={!deactivationReason.trim()}
-                className="btn-primary bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none"
               >
                 Desativar
               </button>
@@ -594,10 +584,10 @@ export default function Users() {
 
       {/* Modal de Alterar Senha */}
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-dark-lighter rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Alterar Senha</h2>
-            <p className="text-gray-400 mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-[#16162a] rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4 text-white">Alterar Senha</h2>
+            <p className="text-gray-300 mb-4">
               Alterando senha do usuário {selectedUser?.name}
             </p>
             
@@ -610,7 +600,7 @@ export default function Users() {
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full bg-dark border border-dark-accent rounded-lg px-4 py-2 focus:outline-none focus:border-primary"
+                  className="w-full px-3 py-2 bg-[#1a1a2e] border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-[#2563eb] focus:border-[#2563eb]"
                   placeholder="Digite a nova senha"
                 />
               </div>
@@ -623,7 +613,7 @@ export default function Users() {
                   type="password"
                   value={confirmNewPassword}
                   onChange={(e) => setConfirmNewPassword(e.target.value)}
-                  className="w-full bg-dark border border-dark-accent rounded-lg px-4 py-2 focus:outline-none focus:border-primary"
+                  className="w-full px-3 py-2 bg-[#1a1a2e] border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-[#2563eb] focus:border-[#2563eb]"
                   placeholder="Confirme a nova senha"
                 />
               </div>
@@ -637,14 +627,14 @@ export default function Users() {
                   setConfirmNewPassword('');
                   setSelectedUser(null);
                 }}
-                className="btn-outline"
+                className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white focus:outline-none"
               >
                 Cancelar
               </button>
               <button
                 onClick={handlePasswordChange}
                 disabled={!newPassword || !confirmNewPassword || loading}
-                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-4 py-2 bg-[#2563eb] text-white text-sm font-medium rounded-md hover:bg-[#3b82f6] focus:outline-none transition-colors"
               >
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                 Alterar Senha

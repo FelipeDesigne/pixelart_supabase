@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 import { useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -19,6 +20,7 @@ import ConfirmDialog from './ConfirmDialog';
 
 export default function Sidebar() {
   const { signOut, isAdmin, user } = useAuth();
+  const { unreadAdminMessages } = useNotification();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const location = useLocation();
   const [userName, setUserName] = useState('');
@@ -56,7 +58,12 @@ export default function Sidebar() {
     { name: 'Perfil', icon: User, path: '/user/profile' },
     { name: 'Nova Solicitação', icon: PlusCircle, path: '/user/new-request' },
     { name: 'Solicitações', icon: FileText, path: '/user/requests' },
-    { name: 'Chat', icon: MessageCircle, path: '/user/chat' },
+    { 
+      name: 'Chat', 
+      icon: MessageCircle, 
+      path: '/user/chat',
+      badge: unreadAdminMessages > 0 ? unreadAdminMessages : undefined
+    },
     { name: 'Configurações', icon: Settings, path: '/user/settings' },
   ];
 
@@ -64,10 +71,10 @@ export default function Sidebar() {
 
   return (
     <>
-      <aside className="fixed left-0 top-0 h-screen w-64 bg-dark-lighter p-4">
+      <aside className="fixed left-0 top-0 h-screen w-64 bg-[#16162a] border-r border-gray-700 p-4">
         <div className="flex items-center gap-2 mb-8">
-          <FolderGit2 className="w-8 h-8 text-primary" />
-          <span className="text-xl font-bold">PixelArt</span>
+          <FolderGit2 className="w-8 h-8 text-[#2563eb]" />
+          <span className="text-xl font-bold text-white">PixelArt</span>
         </div>
 
         <nav className="space-y-2">
@@ -79,21 +86,28 @@ export default function Sidebar() {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors
+                className={`flex items-center justify-between px-4 py-2 rounded-lg transition-colors
                   ${isActive 
-                    ? 'bg-primary text-white' 
-                    : 'text-gray-400 hover:text-white hover:bg-dark'
+                    ? 'bg-[#2563eb] text-white' 
+                    : 'text-gray-300 hover:text-white hover:bg-[#2563eb]/80'
                   }`}
               >
-                <Icon className="w-5 h-5" />
-                <span>{link.name}</span>
+                <div className="flex items-center gap-2">
+                  <Icon className="w-5 h-5" />
+                  <span>{link.name}</span>
+                </div>
+                {link.badge && (
+                  <span className="px-2 py-1 text-xs font-semibold text-white bg-red-500 rounded-full">
+                    {link.badge}
+                  </span>
+                )}
               </Link>
             );
           })}
 
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-gray-400 hover:text-white hover:bg-dark w-full"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-gray-300 hover:text-white hover:bg-[#2563eb]/80 w-full"
           >
             <LogOut className="w-5 h-5" />
             <span>Sair</span>
@@ -101,9 +115,9 @@ export default function Sidebar() {
         </nav>
 
         <div className="absolute bottom-4 left-4 right-4">
-          <div className="bg-dark p-4 rounded-lg">
+          <div className="bg-[#1a1a2e] p-4 rounded-lg border border-gray-700">
             <div className="text-sm text-gray-400">Logado como</div>
-            <div className="font-medium truncate">{userName}</div>
+            <div className="font-medium text-white truncate">{userName}</div>
           </div>
         </div>
       </aside>

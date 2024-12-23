@@ -130,11 +130,11 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Dashboard Administrativo</h1>
+        <h1 className="text-3xl font-bold text-white">Dashboard Administrativo</h1>
         <CSVLink
           data={csvData}
           filename={`relatorio-${format(new Date(), 'dd-MM-yyyy')}.csv`}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-[#2563eb] text-white rounded-lg hover:bg-[#3b82f6] transition-colors"
         >
           <Download className="w-4 h-4" />
           Exportar CSV
@@ -143,36 +143,36 @@ export default function AdminDashboard() {
       
       {/* Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="bg-dark-lighter p-6 rounded-lg">
-          <h3 className="text-lg font-semibold mb-2">Total de Solicitações</h3>
-          <p className="text-2xl font-bold">{stats.total}</p>
+        <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
+          <h3 className="text-lg font-semibold mb-2 text-gray-300">Total de Solicitações</h3>
+          <p className="text-2xl font-bold text-white">{stats.total}</p>
         </div>
-        <div className="bg-dark-lighter p-6 rounded-lg">
-          <h3 className="text-lg font-semibold mb-2">Pendentes</h3>
+        <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
+          <h3 className="text-lg font-semibold mb-2 text-gray-300">Pendentes</h3>
           <p className="text-2xl font-bold text-yellow-500">{stats.pending}</p>
         </div>
-        <div className="bg-dark-lighter p-6 rounded-lg">
-          <h3 className="text-lg font-semibold mb-2">Em Andamento</h3>
-          <p className="text-2xl font-bold text-blue-500">{stats.in_progress}</p>
+        <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
+          <h3 className="text-lg font-semibold mb-2 text-gray-300">Em Andamento</h3>
+          <p className="text-2xl font-bold text-[#2563eb]">{stats.in_progress}</p>
         </div>
-        <div className="bg-dark-lighter p-6 rounded-lg">
-          <h3 className="text-lg font-semibold mb-2">Concluídas</h3>
+        <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
+          <h3 className="text-lg font-semibold mb-2 text-gray-300">Concluídas</h3>
           <p className="text-2xl font-bold text-green-500">{stats.completed}</p>
         </div>
-        <div className="bg-dark-lighter p-6 rounded-lg">
-          <h3 className="text-lg font-semibold mb-2">Rejeitadas</h3>
+        <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
+          <h3 className="text-lg font-semibold mb-2 text-gray-300">Rejeitadas</h3>
           <p className="text-2xl font-bold text-red-500">{stats.rejected}</p>
         </div>
       </div>
 
       {/* Gráfico */}
-      <div className="bg-dark-lighter p-6 rounded-lg">
+      <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">Solicitações por Dia</h2>
+          <h2 className="text-xl font-semibold text-white">Solicitações por Dia</h2>
           <select
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="bg-dark text-white px-3 py-2 rounded-lg"
+            className="bg-[#1a1a2e] text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb]"
           >
             <option value="7">Últimos 7 dias</option>
             <option value="15">Últimos 15 dias</option>
@@ -182,35 +182,42 @@ export default function AdminDashboard() {
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="requests" stroke="#8884d8" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis dataKey="date" stroke="#9CA3AF" />
+              <YAxis stroke="#9CA3AF" />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: '#1a1a2e',
+                  border: '1px solid #374151',
+                  borderRadius: '8px',
+                  color: '#fff'
+                }}
+              />
+              <Line type="monotone" dataKey="requests" stroke="#2563eb" strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       {/* Lista de Solicitações */}
-      <div className="bg-dark-lighter p-6 rounded-lg">
+      <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">Últimas Solicitações</h2>
+          <h2 className="text-xl font-semibold text-white">Últimas Solicitações</h2>
           <div className="flex gap-4">
             <div className="relative">
               <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Buscar solicitação..."
+                placeholder="Buscar solicitações..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 bg-dark rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="pl-10 pr-4 py-2 bg-[#1a1a2e] text-white rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb] w-full md:w-64"
               />
             </div>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-dark text-white px-3 py-2 rounded-lg"
+              className="px-3 py-2 bg-[#1a1a2e] text-white rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb]"
             >
               <option value="all">Todos os status</option>
               <option value="pending">Pendentes</option>

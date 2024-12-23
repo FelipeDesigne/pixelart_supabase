@@ -130,7 +130,7 @@ export default function Overview() {
     <div className="space-y-6">
       {/* Cabeçalho */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-white">Dashboard</h1>
         <div className="flex gap-3">
           {userData?.driveUrl && (
             <a
@@ -138,7 +138,7 @@ export default function Overview() {
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-all
-                bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700
+                bg-[#2563eb] hover:bg-[#3b82f6]
                 text-white font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               <FolderGit2 className="w-4 h-4" />
@@ -146,18 +146,24 @@ export default function Overview() {
             </a>
           )}
           {userData?.isActive !== false ? (
-            <Link to="/user/new-request" className="btn-primary">
+            <Link 
+              to="/user/new-request" 
+              className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-all
+                bg-[#2563eb] hover:bg-[#3b82f6]
+                text-white font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            >
               Nova Solicitação
             </Link>
           ) : (
             <div className="relative group">
               <button
                 disabled
-                className="btn-primary opacity-50 cursor-not-allowed"
+                className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg
+                  bg-[#2563eb] text-white opacity-50 cursor-not-allowed"
               >
                 Nova Solicitação
               </button>
-              <div className="absolute bottom-full mb-2 right-0 w-64 bg-dark-lighter text-sm p-2 rounded-lg shadow-lg hidden group-hover:block">
+              <div className="absolute bottom-full mb-2 right-0 w-64 bg-[#1a1a2e] text-sm p-2 rounded-lg shadow-lg hidden group-hover:block border border-gray-700">
                 <p className="text-red-400">Sua conta está desativada. Motivo: {userData.deactivationReason}</p>
               </div>
             </div>
@@ -167,15 +173,15 @@ export default function Overview() {
 
       {/* Cards de Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-dark-lighter p-6 rounded-lg">
+        <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
           <div className="flex items-center gap-2 mb-2">
-            <Image className="w-5 h-5 text-primary" />
+            <Image className="w-5 h-5 text-[#2563eb]" />
             <span className="text-gray-400">Total de Solicitações</span>
           </div>
-          <p className="text-2xl font-bold">{stats.total}</p>
+          <p className="text-2xl font-bold text-white">{stats.total}</p>
         </div>
 
-        <div className="bg-dark-lighter p-6 rounded-lg">
+        <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle className="w-5 h-5 text-green-500" />
             <span className="text-gray-400">Concluídas</span>
@@ -183,7 +189,7 @@ export default function Overview() {
           <p className="text-2xl font-bold text-green-500">{stats.completed}</p>
         </div>
 
-        <div className="bg-dark-lighter p-6 rounded-lg">
+        <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
           <div className="flex items-center gap-2 mb-2">
             <Clock className="w-5 h-5 text-yellow-500" />
             <span className="text-gray-400">Em Andamento</span>
@@ -191,7 +197,7 @@ export default function Overview() {
           <p className="text-2xl font-bold text-yellow-500">{stats.inProgress}</p>
         </div>
 
-        <div className="bg-dark-lighter p-6 rounded-lg">
+        <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle className="w-5 h-5 text-blue-500" />
             <span className="text-gray-400">Pendentes</span>
@@ -201,17 +207,17 @@ export default function Overview() {
       </div>
 
       {/* Atividade Recente */}
-      <div className="bg-dark-lighter rounded-lg p-6">
-        <h2 className="text-xl font-bold mb-4">Atividade Recente</h2>
+      <div className="bg-[#1a1a2e] rounded-lg p-6">
+        <h2 className="text-xl font-bold mb-4 text-white">Atividade Recente</h2>
         <div className="space-y-4">
           {recentActivity.map((activity) => (
-            <div key={activity.id} className="flex items-center justify-between p-4 bg-dark rounded-lg">
+            <div key={activity.id} className="flex items-center justify-between p-4 bg-[#16162a] rounded-lg border border-gray-700">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Image className="w-5 h-5 text-primary" />
+                <div className="w-10 h-10 rounded-full bg-[#2563eb]/10 flex items-center justify-center">
+                  <Image className="w-5 h-5 text-[#2563eb]" />
                 </div>
                 <div>
-                  <h3 className="font-medium">{formatRequestType(activity.type)}</h3>
+                  <h3 className="font-medium text-white">{formatRequestType(activity.type)}</h3>
                   <p className="text-sm text-gray-400">
                     {new Date(activity.createdAt?.toDate()).toLocaleDateString()}
                   </p>
@@ -226,12 +232,12 @@ export default function Overview() {
       </div>
 
       {/* Tabela de Solicitações */}
-      <div className="bg-dark-lighter rounded-lg overflow-hidden">
+      <div className="bg-[#1a1a2e] rounded-lg overflow-hidden">
         <div className="p-4 border-b border-gray-700">
-          <h2 className="text-xl font-bold">Todas as Solicitações</h2>
+          <h2 className="text-xl font-bold text-white">Todas as Solicitações</h2>
         </div>
         <table className="min-w-full divide-y divide-gray-700">
-          <thead className="bg-dark-accent">
+          <thead className="bg-[#16162a]">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                 Tipo
@@ -270,7 +276,7 @@ export default function Overview() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-200">
                   <button
                     onClick={() => openDetailsModal(request)}
-                    className="text-primary hover:text-secondary flex items-center gap-1"
+                    className="text-[#2563eb] hover:text-[#3b82f6] flex items-center gap-1"
                   >
                     <Eye className="h-4 w-4" />
                     Ver Detalhes
@@ -285,9 +291,9 @@ export default function Overview() {
       {/* Modal de Detalhes */}
       {showDetailsModal && selectedRequest && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-dark-lighter rounded-lg p-6 max-w-2xl w-full my-8 relative">
-            <div className="flex justify-between items-start sticky top-0 bg-dark-lighter pb-4 mb-4 border-b border-gray-700 z-10">
-              <h2 className="text-xl font-bold">Detalhes da Solicitação</h2>
+          <div className="bg-[#1a1a2e] rounded-lg p-6 max-w-2xl w-full my-8 relative">
+            <div className="flex justify-between items-start sticky top-0 bg-[#1a1a2e] pb-4 mb-4 border-b border-gray-700 z-10">
+              <h2 className="text-xl font-bold text-white">Detalhes da Solicitação</h2>
               <button
                 onClick={() => setShowDetailsModal(false)}
                 className="text-gray-400 hover:text-white"
@@ -299,13 +305,13 @@ export default function Overview() {
             <div className="space-y-6 mt-2">
               <div>
                 <h3 className="text-sm font-medium text-gray-400">Tipo de Serviço</h3>
-                <p className="mt-1">{formatRequestType(selectedRequest.type)}</p>
+                <p className="mt-1 text-white">{formatRequestType(selectedRequest.type)}</p>
               </div>
 
               <div>
                 <h3 className="text-sm font-medium text-gray-400">Descrição do Projeto</h3>
-                <div className="mt-1 bg-dark p-4 rounded-lg max-h-60 overflow-y-auto">
-                  <p className="whitespace-pre-wrap">{selectedRequest.description}</p>
+                <div className="mt-1 bg-[#16162a] p-4 rounded-lg max-h-60 overflow-y-auto">
+                  <p className="whitespace-pre-wrap text-white">{selectedRequest.description}</p>
                 </div>
               </div>
 
@@ -316,7 +322,7 @@ export default function Overview() {
                     href={selectedRequest.reference}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-1 text-primary hover:text-secondary block"
+                    className="mt-1 text-[#2563eb] hover:text-[#3b82f6] block"
                   >
                     Ver Referência
                   </a>
@@ -325,7 +331,7 @@ export default function Overview() {
 
               <div>
                 <h3 className="text-sm font-medium text-gray-400">Data de Entrega Desejada</h3>
-                <p className="mt-1">{selectedRequest.deadline}</p>
+                <p className="mt-1 text-white">{selectedRequest.deadline}</p>
               </div>
 
               <div>
@@ -337,7 +343,7 @@ export default function Overview() {
 
               <div>
                 <h3 className="text-sm font-medium text-gray-400">Data da Solicitação</h3>
-                <p className="mt-1">
+                <p className="mt-1 text-white">
                   {new Date(selectedRequest.createdAt?.toDate()).toLocaleDateString()}
                 </p>
               </div>

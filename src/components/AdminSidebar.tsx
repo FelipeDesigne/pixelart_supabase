@@ -1,123 +1,125 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
-import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 import {
   LayoutDashboard,
   Users,
-  FileText,
-  MessageCircle,
+  MessageSquare,
   Settings,
-  Upload,
   LogOut,
   Menu,
-  X
+  X,
+  Upload,
+  ClipboardList
 } from 'lucide-react';
 
 export default function AdminSidebar() {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
-  const { unreadMessages, unreadRequests } = useNotification();
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { signOut } = useAuth();
+  const { unreadMessages, unreadRequests } = useNotification();
 
   const menuItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
-    { name: 'Usuários', icon: Users, path: '/admin/users' },
+    { path: '/admin', name: 'Dashboard', icon: <LayoutDashboard className="w-6 h-6" /> },
+    { path: '/admin/users', name: 'Usuários', icon: <Users className="w-6 h-6" /> },
+    { path: '/admin/upload-art', name: 'Upload de Artes', icon: <Upload className="w-6 h-6" /> },
     { 
-      name: 'Solicitações', 
-      icon: FileText, 
-      path: '/admin/requests',
-      badge: unreadRequests > 0 ? unreadRequests : undefined
-    },
-    { 
+      path: '/admin/messages', 
       name: 'Mensagens', 
-      icon: MessageCircle, 
-      path: '/admin/messages',
-      badge: unreadMessages > 0 ? unreadMessages : undefined
+      icon: <MessageSquare className="w-6 h-6" />,
+      badge: unreadMessages > 0 ? unreadMessages : undefined 
     },
-    { name: 'Upload de Artes', icon: Upload, path: '/admin/upload-art' },
-    { name: 'Configurações', icon: Settings, path: '/admin/settings' }
+    { 
+      path: '/admin/requests', 
+      name: 'Solicitações', 
+      icon: <ClipboardList className="w-6 h-6" />,
+      badge: unreadRequests > 0 ? unreadRequests : undefined 
+    },
+    { path: '/admin/settings', name: 'Configurações', icon: <Settings className="w-6 h-6" /> },
   ];
 
-  const handleSignOut = async () => {
-    const confirmed = window.confirm('Tem certeza que deseja sair?');
-    if (confirmed) {
+  const handleLogout = async () => {
+    try {
       await signOut();
-      navigate('/');
+      toast.success('Logout realizado com sucesso!');
+      navigate('/login');
+    } catch (error) {
+      console.error('Erro no logout:', error);
+      toast.error('Erro ao fazer logout. Tente novamente.');
     }
-  };
-
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
   };
 
   return (
     <>
+      {/* Mobile menu button */}
       <button
-        onClick={toggleMenu}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white text-black rounded-lg shadow-lg hover:bg-gray-100"
+        onClick={() => setIsOpen(!isOpen)}
+        className="fixed top-4 left-4 z-50 md:hidden text-white hover:text-[#3b82f6]"
       >
-        {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
       </button>
 
-      <div
-        onClick={() => setIsOpen(false)}
-        className={`
-          fixed inset-0 bg-black bg-opacity-50
-          md:hidden
-          transition-opacity duration-300
-          ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}
-          z-30
-        `}
-      />
+      {/* Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setIsOpen(false)}
+        ></div>
+      )}
 
-      <aside className={`
-        fixed md:static
-        w-64 h-screen
-        bg-dark-lighter border-r border-gray-700
-        flex flex-col
-        transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-        z-40
-      `}>
-        <div className="p-6">
-          <h1 className="text-xl font-bold">Admin Panel</h1>
-          <p className="text-sm text-gray-400">{user?.email}</p>
-        </div>
+      {/* Sidebar */}
+      <aside
+        className={`${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        } fixed md:translate-x-0 w-64 h-full bg-[#16162a] border-r border-gray-700 z-50 transition-transform duration-200 ease-in-out`}
+      >
+        <div className="flex flex-col h-full">
+          {/* Logo */}
+          <div className="flex items-center justify-center h-16 border-b border-gray-700">
+            <h1 className="text-xl font-bold text-white">Admin Panel</h1>
+          </div>
 
-        <nav className="mt-6 flex-1">
-          {menuItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              onClick={() => setIsOpen(false)}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-6 py-3 text-gray-300 hover:bg-dark hover:text-white transition-colors ${
-                  isActive ? 'bg-dark text-white border-l-4 border-primary' : ''
-                }`
-              }
+          {/* Navigation */}
+          <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
+            {menuItems.map((item) => (
+              <button
+                key={item.path}
+                onClick={() => {
+                  navigate(item.path);
+                  setIsOpen(false);
+                }}
+                className={`${
+                  location.pathname === item.path
+                    ? 'bg-[#2563eb] text-white'
+                    : 'text-gray-300 hover:bg-[#2563eb]/80 hover:text-white'
+                } flex items-center justify-between w-full px-4 py-2 text-sm font-medium rounded-lg transition-colors`}
+              >
+                <div className="flex items-center">
+                  {item.icon}
+                  <span className="ml-3">{item.name}</span>
+                </div>
+                {item.badge && (
+                  <span className="px-2 py-1 text-xs font-semibold text-white bg-red-500 rounded-full">
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            ))}
+          </nav>
+
+          {/* Logout button */}
+          <div className="p-4 border-t border-gray-700">
+            <button
+              onClick={handleLogout}
+              className="flex items-center w-full px-4 py-2 text-sm font-medium text-gray-300 rounded-lg hover:bg-[#2563eb]/80 hover:text-white transition-colors"
             >
-              <div className="flex items-center gap-3 flex-1">
-                <item.icon className="w-5 h-5" />
-                <span>{item.name}</span>
-              </div>
-              {item.badge && (
-                <span className="bg-primary text-white text-xs font-semibold px-2 py-1 rounded-full">
-                  {item.badge}
-                </span>
-              )}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="p-4 border-t border-gray-700">
-          <button
-            onClick={handleSignOut}
-            className="flex items-center gap-3 px-6 py-3 text-gray-300 hover:bg-dark hover:text-white transition-colors w-full rounded-lg"
-          >
-            <LogOut className="w-5 h-5" />
-            <span>Sair</span>
-          </button>
+              <LogOut className="w-6 h-6" />
+              <span className="ml-3">Logout</span>
+            </button>
+          </div>
         </div>
       </aside>
     </>

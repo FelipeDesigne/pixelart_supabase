@@ -125,12 +125,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    await firebaseSignOut(auth);
-    setUser(null);
-    setIsAdmin(false);
-    localStorage.removeItem('authUser');
-    localStorage.removeItem('isAdmin');
-    navigate('/');
+    try {
+      console.log('Attempting to sign out');
+      await firebaseSignOut(auth);
+      console.log('Firebase sign out successful');
+      
+      setUser(null);
+      setIsAdmin(false);
+      localStorage.removeItem('authUser');
+      localStorage.removeItem('isAdmin');
+      
+      console.log('Local state and storage cleared');
+      navigate('/login');
+      console.log('Redirected to login page');
+    } catch (error: any) {
+      console.error('Sign out error:', error);
+      throw new Error('Erro ao fazer logout. Tente novamente.');
+    }
   };
 
   const value = {

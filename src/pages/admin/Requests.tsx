@@ -113,7 +113,7 @@ export default function Requests() {
   return (
     <div className="container mx-auto p-4">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
+        <h1 className="text-2xl font-bold flex items-center gap-2 text-white">
           Pedidos
           {unreadRequests > 0 && (
             <Badge variant="destructive">{unreadRequests} novos</Badge>
@@ -125,8 +125,8 @@ export default function Requests() {
         {requests.map((request) => (
           <Card
             key={request.id}
-            className={`cursor-pointer transition-all hover:shadow-lg ${
-              !request.read ? 'ring-2 ring-blue-500' : ''
+            className={`cursor-pointer transition-all hover:shadow-lg bg-[#16162a] border-gray-700 hover:bg-[#1a1a2e] ${
+              !request.read ? 'ring-2 ring-[#2563eb]' : ''
             }`}
             onClick={() => {
               setSelectedRequest(request);
@@ -135,21 +135,26 @@ export default function Requests() {
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div className="flex flex-col">
-                <h3 className="font-semibold">{request.userName}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <h3 className="font-semibold text-white">{request.userName}</h3>
+                <p className="text-sm text-gray-400">
                   {request.createdAt?.toDate().toLocaleString()}
                 </p>
               </div>
-              <Badge className={getStatusColor(request.status)}>
-                {request.status}
+              <Badge 
+                className={`${getStatusColor(request.status)} text-white px-2 py-1 rounded-lg text-xs font-semibold`}
+              >
+                {request.status === 'pending' && 'Pendente'}
+                {request.status === 'in_progress' && 'Em Andamento'}
+                {request.status === 'completed' && 'Concluído'}
+                {request.status === 'rejected' && 'Rejeitado'}
               </Badge>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-700 dark:text-gray-300">
+              <p className="text-gray-300">
                 {truncateDescription(request.description)}
               </p>
               {request.imageUrl && (
-                <div className="mt-2 aspect-video relative overflow-hidden rounded-md">
+                <div className="mt-2 aspect-video relative overflow-hidden rounded-lg border border-gray-700">
                   <img
                     src={request.imageUrl}
                     alt="Preview"

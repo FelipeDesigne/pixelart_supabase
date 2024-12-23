@@ -17,11 +17,13 @@ export default function AdminLayout() {
   if (!isAdmin) return null;
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
+    <div className="flex min-h-screen bg-[#1a1a2e]">
       <AdminSidebar />
-      <main className="flex-1 p-4 md:p-6 overflow-x-hidden mt-16 md:mt-0">
-        <Outlet />
-      </main>
+      <div className="flex-1 ml-64">
+        <main className="p-6">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

@@ -109,24 +109,24 @@ export default function NewRequest() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Nova Solicitação</h1>
+      <h1 className="text-3xl font-bold mb-6 text-white">Nova Solicitação</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium mb-2">
+          <label className="block text-sm font-medium mb-2 text-white">
             Tipo de Arte
           </label>
           <select
             value={formData.type}
             onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-            className="w-full p-2 bg-dark-lighter rounded-lg border border-gray-700 focus:outline-none focus:border-primary"
+            className="w-full p-2 bg-[#16162a] text-white rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb] focus:border-transparent"
             required
           >
-            <option value="">Selecione o tipo</option>
-            <option value="feed">Arte para Feed (Instagram/Facebook)</option>
-            <option value="stories">Arte para Stories (Instagram/Facebook)</option>
-            <option value="feed-stories">Arte para Feed + Stories (Instagram/Facebook)</option>
-            <option value="motion">Motion Design (Arte Animada)</option>
+            <option value="" className="bg-[#16162a]">Selecione o tipo</option>
+            <option value="feed" className="bg-[#16162a]">Arte para Feed (Instagram/Facebook)</option>
+            <option value="stories" className="bg-[#16162a]">Arte para Stories (Instagram/Facebook)</option>
+            <option value="feed-stories" className="bg-[#16162a]">Arte para Feed + Stories (Instagram/Facebook)</option>
+            <option value="motion" className="bg-[#16162a]">Motion Design (Arte Animada)</option>
           </select>
           <p className="mt-2 text-sm text-gray-400">
             {formData.type === 'feed' && 
@@ -141,20 +141,20 @@ export default function NewRequest() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">
+          <label className="block text-sm font-medium mb-2 text-white">
             Descrição
           </label>
           <textarea
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="w-full p-2 bg-dark-lighter rounded-lg border border-gray-700 focus:outline-none focus:border-primary min-h-[100px]"
+            className="w-full p-2 bg-[#16162a] text-white rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb] focus:border-transparent min-h-[100px]"
             placeholder="Descreva o que você precisa..."
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">
+          <label className="block text-sm font-medium mb-2 text-white">
             Imagens de Referência
           </label>
           {formData.referenceUrls.map((url, index) => (
@@ -163,14 +163,14 @@ export default function NewRequest() {
                 type="text"
                 value={url}
                 onChange={(e) => updateReferenceUrl(index, e.target.value)}
-                className="flex-1 p-2 bg-dark-lighter rounded-lg border border-gray-700 focus:outline-none focus:border-primary"
+                className="flex-1 p-2 bg-[#16162a] text-white rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb] focus:border-transparent"
                 placeholder="URL da imagem de referência"
               />
               {formData.referenceUrls.length > 1 && (
                 <button
                   type="button"
                   onClick={() => removeReferenceUrl(index)}
-                  className="p-2 text-red-500 hover:text-red-400"
+                  className="p-2 text-red-500 hover:text-red-400 transition-colors"
                   title="Remover URL"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -183,7 +183,7 @@ export default function NewRequest() {
           <button
             type="button"
             onClick={addReferenceUrl}
-            className="mt-2 text-primary hover:text-primary-light flex items-center gap-1 text-sm"
+            className="mt-2 text-[#2563eb] hover:text-[#3b82f6] flex items-center gap-1 text-sm transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -193,14 +193,14 @@ export default function NewRequest() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">
+          <label className="block text-sm font-medium mb-2 text-white">
             URL do Google Drive
           </label>
           <input
             type="text"
             value={formData.driveUrl}
             onChange={(e) => setFormData({ ...formData, driveUrl: e.target.value })}
-            className="w-full p-2 bg-dark-lighter rounded-lg border border-gray-700 focus:outline-none focus:border-primary"
+            className="w-full p-2 bg-[#16162a] text-white rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb] focus:border-transparent"
             placeholder="Cole aqui o link da sua pasta no Google Drive"
           />
           <p className="mt-1 text-sm text-gray-400">
@@ -209,20 +209,24 @@ export default function NewRequest() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">
+          <label className="block text-sm font-medium mb-2 text-white">
             Imagem
           </label>
           <input
             type="file"
             onChange={(e) => setSelectedFile(e.target.files[0])}
-            className="w-full p-2 bg-dark-lighter rounded-lg border border-gray-700 focus:outline-none focus:border-primary"
+            className="w-full p-2 bg-[#16162a] text-white rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb] focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#2563eb] file:text-white hover:file:bg-[#3b82f6]"
           />
         </div>
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full btn-primary py-2 flex items-center justify-center gap-2"
+          className={`w-full py-2 px-4 rounded-lg flex items-center justify-center gap-2 text-white font-medium transition-colors
+            ${isSubmitting 
+              ? 'bg-[#2563eb]/50 cursor-not-allowed' 
+              : 'bg-[#2563eb] hover:bg-[#3b82f6]'
+            }`}
         >
           {isSubmitting ? (
             <>

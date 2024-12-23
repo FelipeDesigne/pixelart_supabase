@@ -78,15 +78,15 @@ export default function Settings() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Configurações</h1>
+        <h1 className="text-3xl font-bold text-white">Configurações</h1>
       </div>
       
       <div className="space-y-4">
         {/* Configurações do Sistema */}
-        <div className="bg-dark-lighter p-6 rounded-lg">
+        <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
           <div className="flex items-center gap-2 mb-4">
-            <Settings2 className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Configurações do Sistema</h2>
+            <Settings2 className="h-5 w-5 text-[#2563eb]" />
+            <h2 className="text-xl font-semibold text-white">Configurações do Sistema</h2>
           </div>
           <div className="space-y-4">
             <div>
@@ -98,7 +98,7 @@ export default function Settings() {
                 name="maxRequestSize"
                 value={systemSettings.maxRequestSize}
                 onChange={handleSystemSettingChange}
-                className="w-full px-3 py-2 bg-dark border border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-3 py-2 bg-[#1a1a2e] text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-[#2563eb] focus:border-transparent"
               />
             </div>
             <div>
@@ -110,7 +110,7 @@ export default function Settings() {
                 value={systemSettings.allowedFileTypes.join(', ')}
                 onChange={handleFileTypesChange}
                 placeholder=".png, .jpg, .jpeg"
-                className="w-full px-3 py-2 bg-dark border border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-3 py-2 bg-[#1a1a2e] text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-[#2563eb] focus:border-transparent"
               />
             </div>
             <div>
@@ -121,7 +121,7 @@ export default function Settings() {
                 name="defaultPriority"
                 value={systemSettings.defaultPriority}
                 onChange={handleSystemSettingChange}
-                className="w-full px-3 py-2 bg-dark border border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-3 py-2 bg-[#1a1a2e] text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-[#2563eb] focus:border-transparent"
               >
                 <option value="low">Baixa</option>
                 <option value="normal">Normal</option>
@@ -130,7 +130,7 @@ export default function Settings() {
             </div>
             <button
               onClick={handleSaveSystemSettings}
-              className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+              className="w-full px-4 py-2 bg-[#2563eb] text-white rounded-lg hover:bg-[#3b82f6] transition-colors"
             >
               Salvar Configurações do Sistema
             </button>
@@ -138,10 +138,10 @@ export default function Settings() {
         </div>
 
         {/* Segurança */}
-        <div className="bg-dark-lighter p-6 rounded-lg">
+        <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
           <div className="flex items-center gap-2 mb-4">
-            <Lock className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Segurança</h2>
+            <Lock className="h-5 w-5 text-[#2563eb]" />
+            <h2 className="text-xl font-semibold text-white">Segurança</h2>
           </div>
           <div className="space-y-4">
             {isChangePasswordOpen ? (
@@ -153,7 +153,7 @@ export default function Settings() {
                     name="currentPassword"
                     value={formData.currentPassword}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full px-3 py-2 bg-dark border border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="mt-1 block w-full px-3 py-2 bg-[#1a1a2e] text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-[#2563eb] focus:border-transparent"
                   />
                 </div>
                 <div>
@@ -163,7 +163,7 @@ export default function Settings() {
                     name="newPassword"
                     value={formData.newPassword}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full px-3 py-2 bg-dark border border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="mt-1 block w-full px-3 py-2 bg-[#1a1a2e] text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-[#2563eb] focus:border-transparent"
                   />
                 </div>
                 <div>
@@ -173,13 +173,13 @@ export default function Settings() {
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full px-3 py-2 bg-dark border border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="mt-1 block w-full px-3 py-2 bg-[#1a1a2e] text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-[#2563eb] focus:border-transparent"
                   />
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={handleChangePassword}
-                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+                    className="px-4 py-2 bg-[#2563eb] text-white rounded-lg hover:bg-[#3b82f6] transition-colors"
                   >
                     Alterar Senha
                   </button>
@@ -201,7 +201,7 @@ export default function Settings() {
             ) : (
               <button
                 onClick={() => setIsChangePasswordOpen(true)}
-                className="w-full px-4 py-2 border border-gray-600 text-gray-300 rounded-lg hover:bg-dark transition-colors"
+                className="px-4 py-2 bg-[#2563eb] text-white rounded-lg hover:bg-[#3b82f6] transition-colors"
               >
                 Alterar Senha
               </button>

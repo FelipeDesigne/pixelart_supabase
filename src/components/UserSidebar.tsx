@@ -48,7 +48,7 @@ export default function UserSidebar() {
     <>
       <button
         onClick={toggleMenu}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white text-black rounded-lg shadow-lg hover:bg-gray-100"
+        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-[#16162a] text-white rounded-lg shadow-lg hover:bg-[#1a1a2e] border border-gray-700"
       >
         {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
       </button>
@@ -67,14 +67,14 @@ export default function UserSidebar() {
       <aside className={`
         fixed md:static
         w-64 h-screen
-        bg-dark-lighter border-r border-gray-700
+        bg-[#16162a] border-r border-gray-700
         flex flex-col
         transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         z-40
       `}>
-        <div className="p-6">
-          <h1 className="text-xl font-bold">Pixel Art</h1>
+        <div className="p-6 border-b border-gray-700">
+          <h1 className="text-xl font-bold text-white">Pixel Art</h1>
           <p className="text-sm text-gray-400">{user?.email}</p>
         </div>
 
@@ -85,8 +85,8 @@ export default function UserSidebar() {
               to={item.path}
               onClick={() => setIsOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-6 py-3 text-gray-300 hover:bg-dark hover:text-white transition-colors ${
-                  isActive ? 'bg-dark text-white border-l-4 border-primary' : ''
+                `flex items-center gap-3 px-6 py-3 text-gray-300 hover:bg-[#2563eb]/80 hover:text-white transition-colors ${
+                  isActive ? 'bg-[#2563eb] text-white' : ''
                 }`
               }
             >
@@ -95,7 +95,7 @@ export default function UserSidebar() {
                 <span>{item.name}</span>
               </div>
               {item.badge && (
-                <span className="bg-primary text-white text-xs font-semibold px-2 py-1 rounded-full">
+                <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
                   {item.badge}
                 </span>
               )}
@@ -106,7 +106,7 @@ export default function UserSidebar() {
         <div className="p-4 border-t border-gray-700">
           <button
             onClick={handleSignOut}
-            className="flex items-center gap-3 px-6 py-3 text-gray-300 hover:bg-dark hover:text-white transition-colors w-full rounded-lg"
+            className="flex items-center gap-3 px-6 py-3 text-gray-300 hover:bg-[#2563eb]/80 hover:text-white transition-colors w-full rounded-lg"
           >
             <LogOut className="w-5 h-5" />
             <span>Sair</span>

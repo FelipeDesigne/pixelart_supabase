@@ -104,17 +104,22 @@ export default function RequestDetailsModal({ isOpen, onClose, request: initialR
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-[#16162a] border border-gray-700">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
+          <DialogTitle className="flex items-center justify-between text-white">
             <span>Detalhes do Pedido</span>
-            <Badge className={getStatusColor(request.status)}>
-              {request.status}
+            <Badge 
+              className={`${getStatusColor(request.status)} text-white px-2 py-1 rounded-lg text-xs font-semibold`}
+            >
+              {request.status === 'pending' && 'Pendente'}
+              {request.status === 'in_progress' && 'Em Andamento'}
+              {request.status === 'completed' && 'Concluído'}
+              {request.status === 'rejected' && 'Rejeitado'}
             </Badge>
             {request.status === 'completed' && (
               <button
                 onClick={handleDeleteRequest}
-                className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-1"
+                className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-1 transition-colors"
                 title="Excluir pedido"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -129,17 +134,17 @@ export default function RequestDetailsModal({ isOpen, onClose, request: initialR
         <div className="space-y-6 py-4">
           {/* Informações do Cliente */}
           <div>
-            <h3 className="font-semibold mb-2">Cliente</h3>
-            <p>{request.userName}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <h3 className="font-semibold mb-2 text-white">Cliente</h3>
+            <p className="text-gray-300">{request.userName}</p>
+            <p className="text-sm text-gray-400">
               {request.createdAt?.toDate().toLocaleString()}
             </p>
           </div>
 
           {/* Descrição */}
           <div>
-            <h3 className="font-semibold mb-2">Descrição</h3>
-            <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+            <h3 className="font-semibold mb-2 text-white">Descrição</h3>
+            <p className="whitespace-pre-wrap text-gray-300">
               {request.description}
             </p>
           </div>
@@ -147,7 +152,7 @@ export default function RequestDetailsModal({ isOpen, onClose, request: initialR
           {/* Imagens de Referência */}
           {request.referenceUrls && request.referenceUrls.length > 0 && (
             <div className="mt-4">
-              <h3 className="font-medium mb-2">Imagens de Referência:</h3>
+              <h3 className="font-medium mb-2 text-white">Imagens de Referência:</h3>
               <div className="space-y-2">
                 {request.referenceUrls.map((url, index) => (
                   url && (
@@ -156,7 +161,7 @@ export default function RequestDetailsModal({ isOpen, onClose, request: initialR
                         href={url} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-primary hover:text-primary-light break-all"
+                        className="text-[#2563eb] hover:text-[#3b82f6] break-all transition-colors"
                       >
                         {url}
                       </a>
@@ -164,7 +169,7 @@ export default function RequestDetailsModal({ isOpen, onClose, request: initialR
                       <img 
                         src={url} 
                         alt={`Referência ${index + 1}`}
-                        className="mt-2 max-w-full h-auto rounded-lg"
+                        className="mt-2 max-w-full h-auto rounded-lg border border-gray-700"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.style.display = 'none';
@@ -180,12 +185,12 @@ export default function RequestDetailsModal({ isOpen, onClose, request: initialR
           {/* URL do Google Drive */}
           {request.driveUrl && (
             <div className="mt-4">
-              <h3 className="font-medium mb-2">Pasta do Google Drive:</h3>
+              <h3 className="font-medium mb-2 text-white">Pasta do Google Drive:</h3>
               <a 
                 href={request.driveUrl} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-primary hover:text-primary-light break-all"
+                className="text-[#2563eb] hover:text-[#3b82f6] break-all transition-colors"
               >
                 {request.driveUrl}
               </a>
@@ -198,38 +203,28 @@ export default function RequestDetailsModal({ isOpen, onClose, request: initialR
               <>
                 <Button
                   onClick={() => handleStatusChange('in_progress')}
-                  variant="default"
-                  className="bg-blue-500 hover:bg-blue-600"
+                  className={`bg-[#2563eb] text-white hover:bg-[#3b82f6] transition-colors ${
+                    request.status === 'in_progress' ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                  disabled={request.status === 'in_progress'}
                 >
-                  Em Progresso
+                  Em Andamento
                 </Button>
                 <Button
                   onClick={() => handleStatusChange('completed')}
-                  variant="default"
-                  className="bg-green-500 hover:bg-green-600"
+                  className={`bg-green-600 text-white hover:bg-green-700 transition-colors ${
+                    request.status === 'completed' ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                  disabled={request.status === 'completed'}
                 >
-                  Concluído
+                  Concluir
                 </Button>
                 <Button
                   onClick={() => handleStatusChange('rejected')}
-                  variant="destructive"
-                >
-                  Rejeitar
-                </Button>
-              </>
-            )}
-            {request.status === 'completed' && (
-              <>
-                <Button
-                  onClick={() => handleStatusChange('in_progress')}
-                  variant="default"
-                  className="bg-blue-500 hover:bg-blue-600"
-                >
-                  Voltar para Em Progresso
-                </Button>
-                <Button
-                  onClick={() => handleStatusChange('rejected')}
-                  variant="destructive"
+                  className={`bg-red-600 text-white hover:bg-red-700 transition-colors ${
+                    request.status === 'rejected' ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                  disabled={request.status === 'rejected'}
                 >
                   Rejeitar
                 </Button>

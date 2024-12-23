@@ -139,12 +139,12 @@ export default function Arts() {
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 bg-[#16162a] text-white">
       <h1 className="text-2xl font-bold mb-6">Minhas Artes</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {arts.map((art) => (
-          <div key={art.id} className="bg-dark-lighter rounded-lg shadow-md overflow-hidden hover:transform hover:scale-105 transition-transform duration-200">
+          <div key={art.id} className="bg-[#1a1a2e] rounded-lg shadow-md overflow-hidden hover:transform hover:scale-105 transition-transform duration-200">
             {art.type === 'video' ? (
               <div className="relative aspect-video bg-gray-100 cursor-pointer" onClick={() => setSelectedItem(art)}>
                 <video 
@@ -162,7 +162,7 @@ export default function Arts() {
                     handleDownload(art);
                   }}
                   disabled={downloading === art.id}
-                  className="absolute top-2 right-2 p-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  className="absolute top-2 right-2 p-2 bg-[#2563eb] text-white rounded-full hover:bg-[#3b82f6] transition-colors disabled:opacity-50"
                 >
                   {downloading === art.id ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -180,7 +180,7 @@ export default function Arts() {
                     handleDownload(art);
                   }}
                   disabled={downloading === art.id}
-                  className="absolute top-2 right-2 p-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  className="absolute top-2 right-2 p-2 bg-[#2563eb] text-white rounded-full hover:bg-[#3b82f6] transition-colors disabled:opacity-50"
                 >
                   {downloading === art.id ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -190,7 +190,7 @@ export default function Arts() {
                 </button>
               </div>
             )}
-            <div className="p-4 bg-dark-lighter">
+            <div className="p-4 bg-[#1a1a2e]">
               <h3 className="font-medium text-lg mb-2 text-white">
                 {art.title || 'Sem título'}
               </h3>
@@ -211,7 +211,7 @@ export default function Arts() {
       {selectedItem && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedItem(null)}>
           <div 
-            className="w-full h-full md:w-auto md:h-auto max-w-[90vw] max-h-[90vh] bg-white rounded-lg p-4 relative flex items-center justify-center" 
+            className="w-full h-full md:w-auto md:h-auto max-w-[90vw] max-h-[90vh] bg-[#1a1a2e] rounded-lg p-4 relative flex items-center justify-center" 
             onClick={e => e.stopPropagation()}
           >
             {selectedItem.type === 'video' ? (
@@ -235,7 +235,7 @@ export default function Arts() {
             <button
               onClick={() => handleDownload(selectedItem)}
               disabled={downloading === selectedItem.id}
-              className="absolute top-2 right-2 p-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50 z-10"
+              className="absolute top-2 right-2 p-2 bg-[#2563eb] text-white rounded-full hover:bg-[#3b82f6] transition-colors disabled:opacity-50 z-10"
             >
               {downloading === selectedItem.id ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

@@ -127,32 +127,32 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Configurações</h1>
+      <h1 className="text-3xl font-bold text-white">Configurações</h1>
       
       <div className="space-y-4">
-        <form onSubmit={handleProfileUpdate} className="bg-dark-lighter p-6 rounded-lg">
+        <form onSubmit={handleProfileUpdate} className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
           <div className="flex items-center gap-2 mb-4">
-            <User className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Configurações do Perfil</h2>
+            <User className="h-5 w-5 text-[#2563eb]" />
+            <h2 className="text-xl font-semibold text-white">Configurações do Perfil</h2>
           </div>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300">Nome de Exibição</label>
+              <label className="block text-sm font-medium text-white">Nome de Exibição</label>
               <input
                 type="text"
                 value={userData.name}
                 onChange={(e) => setUserData({ ...userData, name: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 bg-dark border border-gray-600 rounded-md"
+                className="mt-1 block w-full px-3 py-2 bg-[#1a1a2e] text-white border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2563eb] focus:border-transparent"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300">Email</label>
+              <label className="block text-sm font-medium text-white">Email</label>
               <input
                 type="email"
                 value={userData.email}
                 disabled
-                className="mt-1 block w-full px-3 py-2 bg-dark border border-gray-600 rounded-md opacity-60 cursor-not-allowed"
+                className="mt-1 block w-full px-3 py-2 bg-[#1a1a2e] text-gray-400 border border-gray-700 rounded-md opacity-60 cursor-not-allowed"
               />
               <p className="mt-1 text-sm text-gray-400">O email não pode ser alterado</p>
             </div>
@@ -160,7 +160,11 @@ export default function Settings() {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-primary"
+                className={`px-4 py-2 rounded-lg text-white font-medium transition-colors
+                  ${loading 
+                    ? 'bg-[#2563eb]/50 cursor-not-allowed' 
+                    : 'bg-[#2563eb] hover:bg-[#2563eb]/90'
+                  }`}
               >
                 {loading ? 'Salvando...' : 'Salvar Alterações'}
               </button>
@@ -168,15 +172,15 @@ export default function Settings() {
           </div>
         </form>
 
-        <div className="bg-dark-lighter p-6 rounded-lg">
+        <div className="bg-[#16162a] p-6 rounded-lg border border-gray-700">
           <div className="flex items-center gap-2 mb-4">
-            <Lock className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Segurança</h2>
+            <Lock className="h-5 w-5 text-[#2563eb]" />
+            <h2 className="text-xl font-semibold text-white">Segurança</h2>
           </div>
           <div className="space-y-4">
             <button
               onClick={() => setShowPasswordModal(true)}
-              className="btn-outline w-full"
+              className="w-full px-4 py-2 rounded-lg border border-[#2563eb] text-[#2563eb] hover:bg-[#2563eb]/10 transition-colors"
             >
               Alterar Senha
             </button>
@@ -185,57 +189,56 @@ export default function Settings() {
       </div>
 
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-dark-lighter rounded-lg p-6 max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4">Alterar Senha</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-[#16162a] rounded-lg p-6 max-w-md w-full border border-gray-700">
+            <h2 className="text-xl font-bold mb-4 text-white">Alterar Senha</h2>
             <form onSubmit={handlePasswordChange} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300">Senha Atual</label>
+                <label className="block text-sm font-medium text-white">Senha Atual</label>
                 <input
                   type="password"
                   value={passwordData.currentPassword}
                   onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 bg-dark border border-gray-600 rounded-md"
+                  className="mt-1 block w-full px-3 py-2 bg-[#1a1a2e] text-white border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2563eb] focus:border-transparent"
                   required
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-300">Nova Senha</label>
+                <label className="block text-sm font-medium text-white">Nova Senha</label>
                 <input
                   type="password"
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 bg-dark border border-gray-600 rounded-md"
+                  className="mt-1 block w-full px-3 py-2 bg-[#1a1a2e] text-white border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2563eb] focus:border-transparent"
                   required
-                  minLength={6}
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-300">Confirmar Nova Senha</label>
+                <label className="block text-sm font-medium text-white">Confirmar Nova Senha</label>
                 <input
                   type="password"
                   value={passwordData.confirmPassword}
                   onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 bg-dark border border-gray-600 rounded-md"
+                  className="mt-1 block w-full px-3 py-2 bg-[#1a1a2e] text-white border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2563eb] focus:border-transparent"
                   required
-                  minLength={6}
                 />
               </div>
-
-              <div className="flex justify-end gap-4 mt-6">
+              <div className="flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowPasswordModal(false)}
-                  className="px-4 py-2 text-gray-300 hover:text-white"
+                  className="px-4 py-2 rounded-lg border border-gray-700 text-gray-400 hover:bg-[#1a1a2e] transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-primary"
+                  className={`px-4 py-2 rounded-lg text-white font-medium transition-colors
+                    ${loading 
+                      ? 'bg-[#2563eb]/50 cursor-not-allowed' 
+                      : 'bg-[#2563eb] hover:bg-[#2563eb]/90'
+                    }`}
                 >
                   {loading ? 'Alterando...' : 'Alterar Senha'}
                 </button>

@@ -8,7 +8,7 @@ import Requests from './Requests';
 
 export default function UserDashboard() {
   return (
-    <div className="flex">
+    <div className="flex bg-[#1a1a2e]">
       <Sidebar />
       <main className="flex-1 ml-64 p-8">
         <Routes>

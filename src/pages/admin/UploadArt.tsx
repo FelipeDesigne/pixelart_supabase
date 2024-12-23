@@ -126,31 +126,31 @@ export default function UploadArt() {
 
   return (
     <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Upload de Arte Finalizada</h1>
+      <h1 className="text-2xl font-bold mb-6 text-white">Upload de Arte Finalizada</h1>
 
       <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
         {/* Seleção de usuário */}
         <div>
-          <label className="block text-sm font-medium mb-2">
+          <label className="block text-sm font-medium mb-2 text-gray-300">
             Cliente
           </label>
           <div className="relative">
             <button
               type="button"
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="w-full flex items-center justify-between bg-dark-lighter p-3 rounded-lg text-left hover:bg-dark transition-colors"
+              className="w-full flex items-center justify-between bg-[#16162a] p-3 rounded-lg text-left hover:bg-[#1a1a2e] transition-colors border border-gray-700"
             >
               <span className="text-gray-300">
                 {selectedUser ? users.find(u => u.id === selectedUser)?.email : 'Selecione um cliente'}
               </span>
-              <ChevronDown className="w-5 h-5" />
+              <ChevronDown className="w-5 h-5 text-gray-300" />
             </button>
 
             {dropdownOpen && (
-              <div className="absolute z-10 w-full mt-1 bg-dark-lighter border border-gray-700 rounded-lg shadow-lg max-h-60 overflow-auto">
+              <div className="absolute z-10 w-full mt-1 bg-[#16162a] border border-gray-700 rounded-lg shadow-lg max-h-60 overflow-auto">
                 {loadingUsers ? (
                   <div className="flex items-center justify-center p-4">
-                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                    <Loader2 className="w-5 h-5 animate-spin text-[#2563eb]" />
                   </div>
                 ) : (
                   <div className="py-1">
@@ -158,7 +158,7 @@ export default function UploadArt() {
                       <button
                         key={user.id}
                         type="button"
-                        className="w-full text-left px-4 py-2 hover:bg-dark transition-colors"
+                        className="w-full text-left px-4 py-2 text-gray-300 hover:bg-[#1a1a2e] transition-colors"
                         onClick={() => {
                           setSelectedUser(user.id);
                           setDropdownOpen(false);
@@ -176,64 +176,81 @@ export default function UploadArt() {
 
         {/* Título */}
         <div>
-          <label className="block text-sm font-medium mb-2">
+          <label className="block text-sm font-medium mb-2 text-gray-300">
             Título
           </label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-dark-lighter p-3 rounded-lg"
+            className="w-full bg-[#16162a] p-3 rounded-lg text-white placeholder-gray-400 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb]"
             placeholder="Digite o título da arte..."
           />
         </div>
 
         {/* Descrição */}
         <div>
-          <label className="block text-sm font-medium mb-2">
+          <label className="block text-sm font-medium mb-2 text-gray-300">
             Descrição (opcional)
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full bg-dark-lighter p-3 rounded-lg min-h-[100px]"
+            className="w-full bg-[#16162a] p-3 rounded-lg text-white placeholder-gray-400 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb] min-h-[100px]"
             placeholder="Digite uma descrição..."
           />
         </div>
 
-        {/* Upload de arquivo */}
+        {/* Upload de arquivos */}
         <div>
-          <label className="block text-sm font-medium mb-2">
+          <label className="block text-sm font-medium mb-2 text-gray-300">
             Arquivos
           </label>
           <input
             type="file"
-            onChange={(e) => setFiles(Array.from(e.target.files || []))}
-            accept="image/*,video/*"
             multiple
-            className="w-full bg-dark-lighter p-3 rounded-lg"
+            accept="image/*,video/*"
+            onChange={(e) => setFiles(Array.from(e.target.files || []))}
+            className="w-full bg-[#16162a] p-3 rounded-lg text-white border border-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#2563eb] file:text-white hover:file:bg-[#3b82f6]"
           />
-          {files.length > 0 && (
-            <p className="mt-2 text-sm text-gray-400">
-              {files.length} {files.length === 1 ? 'arquivo selecionado' : 'arquivos selecionados'}
-            </p>
-          )}
+          <p className="mt-2 text-sm text-gray-400">
+            Formatos suportados: JPG, PNG, GIF, WebP, MP4, WebM (máx. 50MB)
+          </p>
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-primary hover:bg-primary-dark text-white font-medium py-3 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin mr-2" />
-              Enviando...
-            </>
-          ) : (
-            'Enviar Arte'
-          )}
-        </button>
+        {/* Lista de arquivos selecionados */}
+        {files.length > 0 && (
+          <div>
+            <h3 className="text-sm font-medium mb-2 text-gray-300">
+              Arquivos selecionados:
+            </h3>
+            <ul className="space-y-1 text-sm text-gray-400">
+              {Array.from(files).map((file, index) => (
+                <li key={index}>
+                  {file.name} ({(file.size / 1024 / 1024).toFixed(2)}MB)
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Botão de envio */}
+        <div>
+          <button
+            type="submit"
+            disabled={loading || !selectedUser || !title || files.length === 0}
+            className="w-full bg-[#2563eb] text-white p-3 rounded-lg font-medium hover:bg-[#3b82f6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                Enviando...
+              </>
+            ) : (
+              'Enviar Arte'
+            )}
+          </button>
+        </div>
       </form>
     </div>
   );
