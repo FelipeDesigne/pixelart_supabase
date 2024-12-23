@@ -57,7 +57,8 @@ export default function AdminSidebar() {
       {/* Mobile menu button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-50 md:hidden text-white hover:text-[#3b82f6]"
+        className="fixed top-4 left-4 z-50 md:hidden text-white hover:text-[#2563eb] transition-colors"
+        aria-label={isOpen ? "Fechar menu" : "Abrir menu"}
       >
         {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
       </button>
@@ -67,6 +68,7 @@ export default function AdminSidebar() {
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
           onClick={() => setIsOpen(false)}
+          aria-hidden="true"
         ></div>
       )}
 
@@ -74,7 +76,7 @@ export default function AdminSidebar() {
       <aside
         className={`${
           isOpen ? 'translate-x-0' : '-translate-x-full'
-        } fixed md:translate-x-0 w-64 h-full bg-[#16162a] border-r border-gray-700 z-50 transition-transform duration-200 ease-in-out`}
+        } fixed md:translate-x-0 w-64 h-full bg-[#16162a] border-r border-gray-700 z-50 transition-transform duration-200 ease-in-out overflow-hidden`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
@@ -83,7 +85,7 @@ export default function AdminSidebar() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
+          <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
             {menuItems.map((item) => (
               <button
                 key={item.path}
@@ -97,12 +99,12 @@ export default function AdminSidebar() {
                     : 'text-gray-300 hover:bg-[#2563eb]/80 hover:text-white'
                 } flex items-center justify-between w-full px-4 py-2 text-sm font-medium rounded-lg transition-colors`}
               >
-                <div className="flex items-center">
+                <div className="flex items-center gap-3">
                   {item.icon}
-                  <span className="ml-3">{item.name}</span>
+                  <span>{item.name}</span>
                 </div>
                 {item.badge && (
-                  <span className="px-2 py-1 text-xs font-semibold text-white bg-red-500 rounded-full">
+                  <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-500 rounded-full">
                     {item.badge}
                   </span>
                 )}
@@ -114,10 +116,10 @@ export default function AdminSidebar() {
           <div className="p-4 border-t border-gray-700">
             <button
               onClick={handleLogout}
-              className="flex items-center w-full px-4 py-2 text-sm font-medium text-gray-300 rounded-lg hover:bg-[#2563eb]/80 hover:text-white transition-colors"
+              className="flex items-center gap-3 w-full px-4 py-2 text-sm font-medium text-gray-300 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors"
             >
               <LogOut className="w-6 h-6" />
-              <span className="ml-3">Logout</span>
+              <span>Logout</span>
             </button>
           </div>
         </div>
