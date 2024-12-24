@@ -4,11 +4,11 @@ import { db } from '../../lib/firebase';
 import { toast } from 'react-hot-toast';
 import { Loader2, Download, Search, Filter } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { CSVLink } from 'react-csv';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+import { exportToExcel } from '../../utils/excelExport';
 
 interface Request {
   id: string;
@@ -107,12 +107,15 @@ export default function AdminDashboard() {
     rejected: requests.filter(r => r.status === 'rejected').length,
   };
 
-  const csvData = filteredRequests.map(request => ({
-    Usuário: request.userName,
-    Status: request.status,
-    'Data de Criação': format(request.createdAt.toDate(), 'dd/MM/yyyy HH:mm', { locale: ptBR }),
-    Descrição: request.description,
-  }));
+  const handleExportExcel = () => {
+    try {
+      exportToExcel(filteredRequests);
+      toast.success('Relatório exportado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao exportar relatório:', error);
+      toast.error('Erro ao exportar relatório');
+    }
+  };
 
   if (loading) {
     return (
@@ -131,14 +134,13 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-white">Dashboard Administrativo</h1>
-        <CSVLink
-          data={csvData}
-          filename={`relatorio-${format(new Date(), 'dd-MM-yyyy')}.csv`}
+        <button
+          onClick={handleExportExcel}
           className="flex items-center gap-2 px-4 py-2 bg-[#2563eb] text-white rounded-lg hover:bg-[#3b82f6] transition-colors"
         >
           <Download className="w-4 h-4" />
-          Exportar CSV
-        </CSVLink>
+          Exportar Excel
+        </button>
       </div>
       
       {/* Estatísticas */}
