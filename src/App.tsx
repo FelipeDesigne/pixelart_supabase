@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes as ReactRoutes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes as ReactRoutes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -24,6 +24,7 @@ import { useAuth } from './contexts/AuthContext';
 import InstallPage from './pages/InstallPage';
 import UploadArt from './pages/admin/UploadArt';
 import AdminRequests from './pages/admin/Requests';
+import { useEffect } from 'react';
 
 function HomeRedirect() {
   const { isAdmin } = useAuth();
@@ -31,12 +32,30 @@ function HomeRedirect() {
 }
 
 function AppRoutes() {
+  const { user, isAdmin, loading, setLastRoute } = useAuth();
+  const location = useLocation();
+
+  // Salvar a rota atual quando ela mudar
+  useEffect(() => {
+    if (user && location.pathname !== '/login') {
+      setLastRoute(location.pathname);
+    }
+  }, [location, user, setLastRoute]);
+
   return (
     <>
       <Toaster position="top-right" />
       <InstallPWA />
       <ReactRoutes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={
+          loading ? (
+            <div>Loading...</div>
+          ) : user ? (
+            <Navigate to={localStorage.getItem('lastRoute') || (isAdmin ? '/admin' : '/user')} replace />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        } />
         <Route path="/login" element={<Login />} />
         <Route path="/install" element={<InstallPage />} />
         

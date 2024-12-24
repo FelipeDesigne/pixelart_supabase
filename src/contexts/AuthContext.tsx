@@ -3,7 +3,9 @@ import {
   User,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  browserLocalPersistence,
+  setPersistence
 } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -15,6 +17,8 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<boolean>;
   signOut: () => Promise<void>;
+  lastRoute: string;
+  setLastRoute: (route: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -27,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [lastRoute, setLastRoute] = useState<string>(localStorage.getItem('lastRoute') || '');
   const navigate = useNavigate();
 
   const checkAdminStatus = async (user: User) => {
@@ -55,38 +60,70 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     console.log('Setting up auth listener');
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log('Auth state changed. User:', user?.email);
-      
-      if (user) {
-        setUser(user);
-        const adminStatus = await checkAdminStatus(user);
-        console.log('Admin status determined:', adminStatus);
-        setIsAdmin(adminStatus);
-        localStorage.setItem('authUser', JSON.stringify(user));
-        localStorage.setItem('isAdmin', JSON.stringify(adminStatus));
-      } else {
-        // Verificar se existe usuário no localStorage
-        const storedUser = localStorage.getItem('authUser');
-        const storedIsAdmin = localStorage.getItem('isAdmin');
-        
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-          setIsAdmin(storedIsAdmin === 'true');
-        } else {
-          console.log('No user logged in');
-          setUser(null);
-          setIsAdmin(false);
-          localStorage.removeItem('authUser');
-          localStorage.removeItem('isAdmin');
-        }
-      }
-      
-      setLoading(false);
-    });
+    // Configurar a persistência antes de qualquer outra operação
+    setPersistence(auth, browserLocalPersistence)
+      .then(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+          console.log('Auth state changed. User:', user?.email);
+          
+          if (user) {
+            setUser(user);
+            const adminStatus = await checkAdminStatus(user);
+            console.log('Admin status determined:', adminStatus);
+            setIsAdmin(adminStatus);
+            localStorage.setItem('authUser', JSON.stringify(user));
+            localStorage.setItem('isAdmin', JSON.stringify(adminStatus));
+            
+            // Redirecionar para a última rota se existir, ou para a rota padrão
+            const savedRoute = localStorage.getItem('lastRoute');
+            if (savedRoute) {
+              navigate(savedRoute);
+            } else {
+              navigate(adminStatus ? '/admin' : '/user');
+            }
+          } else {
+            const storedUser = localStorage.getItem('authUser');
+            const storedIsAdmin = localStorage.getItem('isAdmin');
+            
+            if (storedUser) {
+              const parsedUser = JSON.parse(storedUser);
+              setUser(parsedUser);
+              setIsAdmin(storedIsAdmin === 'true');
+              try {
+                await setPersistence(auth, browserLocalPersistence);
+                // Tentar reautenticar o usuário com o Firebase
+                await auth.signInWithCustomToken(parsedUser.stsTokenManager.accessToken);
+              } catch (error) {
+                console.log('Failed to reauth:', error);
+                localStorage.removeItem('authUser');
+                localStorage.removeItem('isAdmin');
+                localStorage.removeItem('lastRoute');
+                setUser(null);
+                setIsAdmin(false);
+                navigate('/login');
+              }
+            } else {
+              console.log('No user logged in');
+              setUser(null);
+              setIsAdmin(false);
+              localStorage.removeItem('authUser');
+              localStorage.removeItem('isAdmin');
+              localStorage.removeItem('lastRoute');
+              if (window.location.pathname !== '/login') {
+                navigate('/login');
+              }
+            }
+          }
+          
+          setLoading(false);
+        });
 
-    return unsubscribe;
-  }, []);
+        return unsubscribe;
+      })
+      .catch((error) => {
+        console.error('Error setting persistence:', error);
+      });
+  }, [navigate]);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -134,6 +171,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAdmin(false);
       localStorage.removeItem('authUser');
       localStorage.removeItem('isAdmin');
+      localStorage.removeItem('lastRoute');
       
       console.log('Local state and storage cleared');
       navigate('/login');
@@ -149,7 +187,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin,
     loading,
     signIn,
-    signOut
+    signOut,
+    lastRoute,
+    setLastRoute: (route: string) => {
+      localStorage.setItem('lastRoute', route);
+      setLastRoute(route);
+    }
   };
 
   return (

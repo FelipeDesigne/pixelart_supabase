@@ -45,7 +45,9 @@ export default function Login() {
         });
       }
       
-      navigate(isAdmin ? '/admin' : '/user', { replace: true });
+      // Navegar para a última rota ou rota padrão
+      const lastRoute = localStorage.getItem('lastRoute');
+      navigate(lastRoute || (isAdmin ? '/admin' : '/user'), { replace: true });
     } catch (error: any) {
       console.error('Error signing in:', error);
       toast.error(error.message);
